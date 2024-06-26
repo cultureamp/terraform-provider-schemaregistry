@@ -26,6 +26,10 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
+      - name: Configure Go environment with access to private modules
+        uses: cultureamp/go-private-modules@v1
+        with:
+          github-token: "${{ secrets.GO_PRIVATE_MODULES_TOKEN }}"
       - run: go mod download
       - run: go build -v .
       - name: Run linters
@@ -42,6 +46,10 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
+      - name: Configure Go environment with access to private modules
+        uses: cultureamp/go-private-modules@v1
+        with:
+          github-token: "${{ secrets.GO_PRIVATE_MODULES_TOKEN }}"
       # Temporarily download Terraform 1.8 prerelease for function documentation support.
       # When Terraform 1.8.0 final is released, this can be removed.
       - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3.1.1
@@ -76,6 +84,10 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
+      - name: Configure Go environment with access to private modules
+        uses: cultureamp/go-private-modules@v1
+        with:
+          github-token: "${{ secrets.GO_PRIVATE_MODULES_TOKEN }}"
       - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3.1.1
         with:
           terraform_version: ${{ matrix.terraform }}
