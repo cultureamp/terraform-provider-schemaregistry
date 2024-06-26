@@ -1,4 +1,4 @@
-module terraform-provider-kafka-schema-registry
+module github.com/cultureamp/terraform-provider-kafka-schema-registry
 
 go 1.21
 
@@ -8,6 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.8.0
+	github.com/riferrei/srclient v0.6.0
 
 )
 
@@ -61,7 +62,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
-	github.com/riferrei/srclient v0.6.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

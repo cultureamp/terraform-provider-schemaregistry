@@ -4,8 +4,8 @@ import (
 	"context"
 	"flag"
 	"log"
-	"terraform-provider-kafka-schema-registry/internal/provider"
 
+	"github.com/cultureamp/terraform-provider-kafka-schema-registry/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
