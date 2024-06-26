@@ -1,12 +1,12 @@
 # Terraform Provider release workflow.
 name: Release
+run-name: Release ${{ github.sha }} by @${{ github.actor }}
 
-# This GitHub action creates a release when a tag that matches the pattern
-# "v*" (e.g. v0.1.0) is created.
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+    paths:
+      - "internal/**.go"
 
 # Releases need permissions to read and write the repository contents.
 # GitHub considers creating releases and uploading assets as writing contents.
@@ -23,14 +23,15 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           cache: true
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
-        id: import_gpg
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
+      # TODO: Add a step to import the GPG key.
+      # - name: Import GPG key
+      #   uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+      #   id: import_gpg
+      #   with:
+      #     gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+      #     passphrase: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:
@@ -38,4 +39,5 @@ jobs:
         env:
           # GitHub sets the GITHUB_TOKEN secret automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          # TODO: Add the GPG key fingerprint.
+          # GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
