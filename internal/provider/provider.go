@@ -15,20 +15,20 @@ import (
 )
 
 // Ensure provider satisfies various expected interfaces.
-var _ provider.Provider = &schemaRegistryProvider{}
-var _ provider.ProviderWithFunctions = &schemaRegistryProvider{}
+var _ provider.Provider = &Provider{}
+var _ provider.ProviderWithFunctions = &Provider{}
 
 // New is a helper function to simplify provider server and testing implementation.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &schemaRegistryProvider{
+		return &Provider{
 			version: version,
 		}
 	}
 }
 
-// schemaRegistryProvider is the provider implementation.
-type schemaRegistryProvider struct {
+// Provider is the provider implementation.
+type Provider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
@@ -36,21 +36,21 @@ type schemaRegistryProvider struct {
 }
 
 // ProviderModel maps provider schema data to a Go type.
-type schemaRegistryProviderModel struct {
+type ProviderModel struct {
 	URL      types.String `tfsdk:"schema_registry_url"`
 	Username types.String `tfsdk:"schema_registry_username"`
 	Password types.String `tfsdk:"schema_registry_password"`
 }
 
 // Metadata returns the provider type name.
-func (p *schemaRegistryProvider) Metadata(ctx context.Context, req provider.MetadataRequest,
+func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest,
 	resp *provider.MetadataResponse) {
-	resp.TypeName = "schemaRegistry"
+	resp.TypeName = ""
 	resp.Version = p.version
 }
 
 // Schema defines the provider-level schema for configuration data.
-func (p *schemaRegistryProvider) Schema(ctx context.Context, req provider.SchemaRequest,
+func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest,
 	resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -72,11 +72,11 @@ func (p *schemaRegistryProvider) Schema(ctx context.Context, req provider.Schema
 }
 
 // Configure prepares an API client for data sources and resources.
-func (p *schemaRegistryProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Info(ctx, "Configuring Schema Registry client")
 
 	// Retrieve provider data from configuration
-	var config schemaRegistryProviderModel
+	var config ProviderModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -124,20 +124,20 @@ func getEnvOrDefault(configValue types.String, envVar string) string {
 }
 
 // Resources defines the resources implemented in the provider.
-func (p *schemaRegistryProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		//TODO SchemaResource,
 	}
 }
 
 // DataSources defines the data sources implemented in the provider.
-func (p *schemaRegistryProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *Provider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		//TODO SchemaDatasource,
 	}
 }
 
-func (p *schemaRegistryProvider) Functions(ctx context.Context) []func() function.Function {
+func (p *Provider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
 		//TODO HelperFunction,
 	}
