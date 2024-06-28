@@ -38,14 +38,14 @@ type Provider struct {
 // ProviderModel maps provider schema data to a Go type.
 type ProviderModel struct {
 	URL      types.String `tfsdk:"schema_registry_url"`
-	Username types.String `tfsdk:"schema_registry_username"`
-	Password types.String `tfsdk:"schema_registry_password"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
 }
 
 // Metadata returns the provider type name.
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest,
 	resp *provider.MetadataResponse) {
-	resp.TypeName = ""
+	resp.TypeName = "schemaregistry"
 	resp.Version = p.version
 }
 
@@ -88,8 +88,8 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	password := getEnvOrDefault(config.Password, "SCHEMA_REGISTRY_PASSWORD")
 
 	ctx = tflog.SetField(ctx, "schema_registry_url", url)
-	ctx = tflog.SetField(ctx, "schema_registry_username", username)
-	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "schema_registry_password")
+	ctx = tflog.SetField(ctx, "username", username)
+	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "password")
 
 	tflog.Debug(ctx, "Creating Schema Registry client")
 
@@ -126,7 +126,7 @@ func getEnvOrDefault(configValue types.String, envVar string) string {
 // Resources defines the resources implemented in the provider.
 func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		//TODO SchemaResource,
+		NewSchemaResource,
 	}
 }
 

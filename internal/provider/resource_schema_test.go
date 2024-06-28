@@ -17,15 +17,15 @@ resource "schemaregistry_schema" "test" {
   subject = "test-subject"
   schema  = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
   schema_type = "avro"
-  compatibility_level = "FULL"
+  compatibility_level = "NONE"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify schema attributes
 					resource.TestCheckResourceAttr("schemaregistry_schema.test", "subject", "test-subject"),
 					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema", "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema_type", "json"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "compatibility_level", "FULL"),
+					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema_type", "avro"),
+					resource.TestCheckResourceAttr("schemaregistry_schema.test", "compatibility_level", "NONE"),
 					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "schema_id"),
 					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "version"),
 				),

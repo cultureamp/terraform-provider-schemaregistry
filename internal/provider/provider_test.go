@@ -19,11 +19,11 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 
 const (
 	testAccProviderVersion = "0.0.1"
-	testAccProviderType    = "schema_registry"
+	testAccProviderType    = "schemaregistry"
 
 	providerConfig = `
 	provider "schemaregistry" {
-	  schema_registry_url = "http://test-url"
+	  schema_registry_url = "https://schema-registry.kafka.usw2.dev-us.cultureamp.io"
 	  username            = "test-user"
 	  password            = "test-pass"
 	}

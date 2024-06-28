@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -35,6 +34,7 @@ type schemaResource struct {
 
 // schemaResourceModel describes the resource data model.
 type schemaResourceModel struct {
+	ID                 types.String `tfsdk:"id"`
 	Subject            types.String `tfsdk:"subject"`
 	Schema             types.String `tfsdk:"schema"`
 	SchemaID           types.Int64  `tfsdk:"schema_id"`
@@ -56,6 +56,13 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		MarkdownDescription: "Schema resource. Manages a schema in the Schema Registry.",
 		Description:         "Manages a schema in the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of the schema, which is the subject name.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"subject": schema.StringAttribute{
 				Description: "The subject related to the schema.",
 				Required:    true,
@@ -74,6 +81,9 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"schema_type": schema.StringAttribute{
 				Description: "The schema type. Default is avro.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"avro",
@@ -154,8 +164,8 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
-	references := ToRegistryReferences(plan.Reference)
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
+	references := ToRegistryReferences(plan.Reference)
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Create new schema resource
@@ -177,10 +187,15 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	//convert *srclient.SchemaType to string
+	schemaTypeStr := FromSchemaType(schema.SchemaType())
+
 	// Map response body to schema
-	plan.SchemaID = types.Int64Value(int64(schema.ID()))
-	plan.Version = types.Int64Value(int64(schema.Version()))
+	plan.ID = plan.Subject
 	plan.Schema = types.StringValue(schema.Schema())
+	plan.SchemaID = types.Int64Value(int64(schema.ID()))
+	plan.SchemaType = types.StringValue(schemaTypeStr)
+	plan.Version = types.Int64Value(1) // Set the version to 1 for new schema
 	plan.Reference = FromRegistryReferences(schema.References())
 
 	// Set state to fully populated data
@@ -210,9 +225,12 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	schemaType := FromSchemaType(schema.SchemaType())
+
 	// Update state with refreshed values
 	state.Schema = types.StringValue(schema.Schema())
 	state.SchemaID = types.Int64Value(int64(schema.ID()))
+	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
 	state.Reference = FromRegistryReferences(schema.References())
 
@@ -260,9 +278,9 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
+	plan.Schema = types.StringValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
-	plan.Schema = types.StringValue(schema.Schema())
 	plan.Reference = FromRegistryReferences(schema.References())
 
 	diags = resp.State.Set(ctx, plan)
@@ -295,8 +313,50 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse) {
-	// Retrieve import ID and save to id attribute
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	subject := req.ID
+
+	// Retrieve the latest schema for the subject
+	schema, err := r.client.GetLatestSchema(subject)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Schema",
+			fmt.Sprintf("Could not retrieve schema for subject %s: %s", subject,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	// Retrieve the compatibility level for the subject
+	compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Compatibility Level",
+			fmt.Sprintf("Could not retrieve compatibility level for subject %s: %s", subject, err.Error()),
+		)
+		return
+	}
+
+	schemaType := FromSchemaType(schema.SchemaType())
+
+	// Create state from retrieved schema
+	state := schemaResourceModel{
+		ID:                 types.StringValue(subject),
+		Subject:            types.StringValue(subject),
+		Schema:             types.StringValue(schema.Schema()),
+		SchemaID:           types.Int64Value(int64(schema.ID())),
+		SchemaType:         types.StringValue(schemaType),
+		Version:            types.Int64Value(int64(schema.Version())),
+		Reference:          FromRegistryReferences(schema.References()),
+		CompatibilityLevel: types.StringValue(FromCompatibilityLevelType(*compatibilityLevel)),
+	}
+
+	// Set the state
+	diags := resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func FromRegistryReferences(references []srclient.Reference) types.List {
@@ -385,6 +445,13 @@ func ToRegistryReferences(references types.List) []srclient.Reference {
 	return refs
 }
 
+func FromSchemaType(schemaType *srclient.SchemaType) string {
+	if schemaType == nil {
+		return "avro"
+	}
+	return string(*schemaType)
+}
+
 func ToSchemaType(schemaType string) srclient.SchemaType {
 	switch schemaType {
 	case "json":
@@ -393,6 +460,27 @@ func ToSchemaType(schemaType string) srclient.SchemaType {
 		return srclient.Protobuf
 	default:
 		return srclient.Avro
+	}
+}
+
+func FromCompatibilityLevelType(compatibilityLevel srclient.CompatibilityLevel) string {
+	switch compatibilityLevel {
+	case srclient.None:
+		return "NONE"
+	case srclient.Backward:
+		return "BACKWARD"
+	case srclient.BackwardTransitive:
+		return "BACKWARD_TRANSITIVE"
+	case srclient.Forward:
+		return "FORWARD"
+	case srclient.ForwardTransitive:
+		return "FORWARD_TRANSITIVE"
+	case srclient.Full:
+		return "FULL"
+	case srclient.FullTransitive:
+		return "FULL_TRANSITIVE"
+	default:
+		return "FORWARD_TRANSITIVE"
 	}
 }
 
