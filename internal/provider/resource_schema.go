@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"strings"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -38,9 +38,9 @@ type schemaResourceModel struct {
 	Subject            types.String `tfsdk:"subject"`
 	Schema             types.String `tfsdk:"schema"`
 	SchemaID           types.Int64  `tfsdk:"schema_id"`
+	SchemaType         types.String `tfsdk:"schema_type"`
 	Version            types.Int64  `tfsdk:"version"`
 	Reference          types.List   `tfsdk:"reference"`
-	SchemaType         types.String `tfsdk:"schema_type"`
 	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
 }
 
@@ -52,49 +52,27 @@ func (r *schemaResource) Metadata(_ context.Context, req resource.MetadataReques
 // Schema defines the schema for the resource.
 func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a schema in the Schema Registry",
+		// This description is used by the documentation generator and the language server.
+		MarkdownDescription: "Schema resource. Manages a schema in the Schema Registry.",
+		Description:         "Manages a schema in the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
 			"subject": schema.StringAttribute{
-				Description: "The subject related to the schema",
+				Description: "The subject related to the schema.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"schema": schema.StringAttribute{
-				Description: "The schema string",
+				Description: "The schema string.",
 				Required:    true,
 			},
 			"schema_id": schema.Int64Attribute{
-				Description: "The ID of the schema",
+				Description: "The ID of the schema.",
 				Computed:    true,
-			},
-			"version": schema.Int64Attribute{
-				Description: "The version of the schema",
-				Computed:    true,
-			},
-			"reference": schema.ListNestedAttribute{
-				Description: "The referenced schema list",
-				Optional:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Description: "The referenced schema name",
-							Required:    true,
-						},
-						"subject": schema.StringAttribute{
-							Description: "The referenced schema subject",
-							Required:    true,
-						},
-						"version": schema.Int64Attribute{
-							Description: "The referenced schema version",
-							Required:    true,
-						},
-					},
-				},
 			},
 			"schema_type": schema.StringAttribute{
-				Description: "The schema type",
+				Description: "The schema type. Default is avro.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -104,8 +82,32 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					),
 				},
 			},
+			"version": schema.Int64Attribute{
+				Description: "The version of the schema.",
+				Computed:    true,
+			},
+			"reference": schema.ListNestedAttribute{
+				Description: "The referenced schema list.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The referenced schema name.",
+							Required:    true,
+						},
+						"subject": schema.StringAttribute{
+							Description: "The referenced schema subject.",
+							Required:    true,
+						},
+						"version": schema.Int64Attribute{
+							Description: "The referenced schema version.",
+							Required:    true,
+						},
+					},
+				},
+			},
 			"compatibility_level": schema.StringAttribute{
-				Description: "The compatibility level of the schema",
+				Description: "The compatibility level of the schema. Default is FORWARD_TRANSITIVE.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -113,6 +115,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						"BACKWARD",
 						"BACKWARD_TRANSITIVE",
 						"FORWARD",
+						"FORWARD_TRANSITIVE",
 						"FULL",
 						"FULL_TRANSITIVE",
 					),
@@ -120,6 +123,24 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 		},
 	}
+}
+
+// Configure adds the provider configured client to the resource.
+func (r *schemaResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*srclient.SchemaRegistryClient)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *srclient.SchemaRegistryClient, got: %T.", req.ProviderData),
+		)
+		return
+	}
+
+	r.client = client
 }
 
 func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -137,26 +158,32 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
-	// Create new schema
+	// Create new schema resource
 	schema, err := r.client.CreateSchema(plan.Subject.ValueString(), schemaString, schemaType, references...)
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating schema", "Could not create schema, unexpected error: "+err.Error())
+		resp.Diagnostics.AddError(
+			"Error creating schema",
+			"Could not create schema, unexpected error: "+err.Error(),
+		)
 		return
 	}
 
 	_, err = r.client.ChangeSubjectCompatibilityLevel(plan.Subject.ValueString(), compatibilityLevel)
 	if err != nil {
-		resp.Diagnostics.AddError("Error setting compatibility level", "Could not set compatibility level, "+
-			" unexpected error: "+err.Error())
+		resp.Diagnostics.AddError(
+			"Error setting compatibility level",
+			"Could not set compatibility level, unexpected error: "+err.Error(),
+		)
 		return
 	}
 
-	// Update state with refreshed values
+	// Map response body to schema
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Schema = types.StringValue(schema.Schema())
 	plan.Reference = FromRegistryReferences(schema.References())
 
+	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -189,6 +216,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Version = types.Int64Value(int64(schema.Version()))
 	state.Reference = FromRegistryReferences(schema.References())
 
+	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -197,8 +225,9 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 }
 
 func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// Retrieve values from plan
 	var plan schemaResourceModel
+
+	// Read Terraform plan data into the model
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -214,11 +243,10 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Update existing schema
 	schema, err := r.client.CreateSchema(plan.Subject.ValueString(), schemaString, schemaType, references...)
 	if err != nil {
-		if strings.Contains(err.Error(), "409") {
-			resp.Diagnostics.AddError("Error updating schema", `Invalid "schema": incompatible`)
-			return
-		}
-		resp.Diagnostics.AddError("Error updating schema", "Could not update schema, unexpected error: "+err.Error())
+		resp.Diagnostics.AddError(
+			"Error updating schema",
+			"Could not update schema, unexpected error: "+err.Error(),
+		)
 		return
 	}
 
@@ -245,15 +273,16 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Retrieve values from state
 	var state schemaResourceModel
+
+	// Get current state
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Delete existing schema
+	// Hard deletes existing schema
 	err := r.client.DeleteSubject(state.Subject.ValueString(), true)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -264,27 +293,10 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 }
 
-// Configure adds the provider configured client to the resource.
-func (r *schemaResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*srclient.SchemaRegistryClient)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			"Expected *srclient.SchemaRegistryClient",
-		)
-		return
-	}
-
-	r.client = client
-}
-
 func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("subject"), req, resp)
+	// Retrieve import ID and save to id attribute
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func FromRegistryReferences(references []srclient.Reference) types.List {
@@ -394,6 +406,8 @@ func ToCompatibilityLevelType(compatibilityLevel string) srclient.CompatibilityL
 		return srclient.BackwardTransitive
 	case "FORWARD":
 		return srclient.Forward
+	case "FORWARD_TRANSITIVE":
+		return srclient.ForwardTransitive
 	case "FULL":
 		return srclient.Full
 	case "FULL_TRANSITIVE":
