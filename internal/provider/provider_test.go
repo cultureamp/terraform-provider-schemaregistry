@@ -19,6 +19,15 @@ const (
 	  password            = "test-pass"
 	}
 	`
+
+	resourceConfig = `
+	resource "schemaregistry_schema" "test" {
+	  subject 			  = "test-subject"
+	  schema  			  = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+	  schema_type 		  = "avro"
+	  compatibility_level = "NONE"
+	}
+	`
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
@@ -30,9 +39,11 @@ func TestAccSchemaRegistryProvider(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: providerConfig,
+				Config: providerConfig + resourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("schemaregistry", "schema_registry_url"),
+					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema_registry_url", "https://schema-registry.kafka.usw2.dev-us.cultureamp.io"),
+					resource.TestCheckResourceAttr("schemaregistry_schema.test", "username", "test-user"),
+					resource.TestCheckResourceAttr("schemaregistry_schema.test", "password", "test-pass"),
 				),
 			},
 		},
