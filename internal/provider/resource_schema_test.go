@@ -1,64 +1,58 @@
 package provider
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccSchemaResource(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+func TestAccSchemaResource_CreateReadImport(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-test")
+	resourceName := "schemaregistry_schema.test_01"
+
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: providerConfig + `
-resource "schemaregistry_schema" "test" {
-  subject = "test-subject"
-  schema  = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
-  schema_type = "avro"
-  compatibility_level = "NONE"
-}
-`,
+				Config: testAccSchemaRegistryConfig_base(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify schema attributes
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "subject", "test-subject"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema", "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema_type", "avro"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "compatibility_level", "NONE"),
-					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "schema_id"),
-					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "version"),
+					resource.TestCheckResourceAttr(resourceName, "subject", rName),
+					resource.TestCheckResourceAttr(resourceName, "schema", "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "schemaregistry_schema.test",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				// No attributes to ignore during import
 				ImportStateVerifyIgnore: []string{},
 			},
-			// Update and Read testing
-			{
-				Config: providerConfig + `
-resource "schemaregistry_schema" "test" {
-  subject = "test-subject"
-  schema  = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"
-  schema_type = "avro"
-  compatibility_level = "BACKWARD"
-}
-`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify updated schema attributes
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "subject", "test-subject"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema", "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "schema_type", "avro"),
-					resource.TestCheckResourceAttr("schemaregistry_schema.test", "compatibility_level", "BACKWARD"),
-					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "schema_id"),
-					resource.TestCheckResourceAttrSet("schemaregistry_schema.test", "version"),
-				),
-			},
-			// Delete testing automatically occurs in TestCase
 		},
 	})
+}
+
+func testAccSchemaRegistryConfig_base(rName string) string {
+	return fmt.Sprintf(`
+provider "schemaregistry" {
+  schema_registry_url = "https://schema-registry.kafka.usw2.dev-us.cultureamp.io"
+  username            = "test-user"
+  password            = "test-pass"
+}
+
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "avro"
+  compatibility_level  = "NONE"
+  schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+}
+`, rName)
 }

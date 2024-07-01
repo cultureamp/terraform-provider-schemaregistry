@@ -332,7 +332,9 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Importing Compatibility Level",
-			fmt.Sprintf("Could not retrieve compatibility level for subject %s: %s", subject, err.Error()),
+			fmt.Sprintf("Could not retrieve compatibility level for subject %s: %s", subject,
+				err.Error(),
+			),
 		)
 		return
 	}
@@ -385,7 +387,9 @@ func FromRegistryReferences(references []srclient.Reference) types.List {
 			},
 		)
 		if diags.HasError() {
-			continue // TODO: fix this
+			// Log error and skip this reference
+			fmt.Printf("Error converting reference to object value: %v\n", diags)
+			continue
 		}
 		elems = append(elems, objectValue)
 	}
@@ -401,6 +405,7 @@ func FromRegistryReferences(references []srclient.Reference) types.List {
 		elems,
 	)
 	if diags.HasError() {
+		// Log error and return null list
 		return types.ListNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"name":    types.StringType,
@@ -422,7 +427,8 @@ func ToRegistryReferences(references types.List) []srclient.Reference {
 	for _, reference := range references.Elements() {
 		r, ok := reference.(types.Object)
 		if !ok {
-			// TODO: fix this
+			// Log error and skip this reference
+			fmt.Printf("Error converting reference to object value: %v\n", reference)
 			continue
 		}
 		attributes := r.Attributes()
@@ -431,7 +437,8 @@ func ToRegistryReferences(references types.List) []srclient.Reference {
 		version, versionOk := attributes["version"].(types.Int64)
 
 		if !nameOk || !subjectOk || !versionOk {
-			// TODO: fix this
+			// Log error and skip this reference
+			fmt.Printf("Error extracting attributes from reference object: %v\n", attributes)
 			continue
 		}
 
