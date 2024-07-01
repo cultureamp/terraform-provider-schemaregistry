@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	godotenv "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 )
 
 // getEnvOrDefault returns the value of the configuration or the environment variable.
