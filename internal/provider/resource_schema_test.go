@@ -43,9 +43,9 @@ func TestAccSchemaResource_CreateReadImport(t *testing.T) {
 func testAccSchemaRegistryConfig_base(rName string) string {
 	return fmt.Sprintf(`
 provider "schemaregistry" {
-  schema_registry_url = "https://schema-registry.kafka.usw2.dev-us.cultureamp.io"
-  username            = "test-user"
-  password            = "test-pass"
+  schema_registry_url = "%s"
+  username            = "%s"
+  password            = "%s"
 }
 
 resource "schemaregistry_schema" "test_01" {
@@ -54,5 +54,8 @@ resource "schemaregistry_schema" "test_01" {
   compatibility_level  = "NONE"
   schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
 }
-`, rName)
+`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:8081"),
+		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "test-user"),
+		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test-pass"),
+		rName)
 }
