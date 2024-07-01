@@ -7,13 +7,27 @@ testacc:
 
 # Build the provider
 .PHONY: build
-build:
-	go build -o terraform-provider-schemaregistry
+build: build-amd64 build-arm64
+
+# Build for amd64
+.PHONY: build-amd64
+build-amd64:
+	GOARCH=amd64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-amd64
+
+# Build for arm64
+.PHONY: build-arm64
+build-arm64:
+	GOARCH=arm64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-arm64
 
 # Tidy the module dependencies
 .PHONY: tidy
 tidy:
 	go mod tidy
+
+# Download the module dependencies
+.PHONY: download
+download:
+	go mod download
 
 # Clean the build artifacts
 .PHONY: clean
