@@ -150,17 +150,19 @@ func (d *schemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Fetch the latest schema from the registry
-	schema, err := d.client.GetLatestSchema(inputs.Subject.ValueString())
+	subject := inputs.Subject.ValueString()
+	version := inputs.Version.ValueInt64()
+
+	// Fetch schema and compatibility level
+	schema, err := d.fetchSchema(subject, version)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Schema",
-			"Could not read schema: "+err.Error(),
-		)
+			"Could not read schema: "+err.Error())
 		return
 	}
 
-	compatibilityLevel, err := d.client.GetCompatibilityLevel(inputs.Subject.ValueString(), true)
+	compatibilityLevel, err := d.fetchCompatibilityLevel(subject)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Compatibility Level",
@@ -169,24 +171,40 @@ func (d *schemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	schemaType := FromSchemaType(schema.SchemaType())
-
-	// Map response body to schema
-	outputs := schemaDataSourceModel{
-		ID:                 types.StringValue(inputs.Subject.ValueString()),
-		Subject:            types.StringValue(inputs.Subject.ValueString()),
-		Schema:             types.StringValue(schema.Schema()),
-		SchemaID:           types.Int64Value(int64(schema.ID())),
-		SchemaType:         types.StringValue(schemaType),
-		Version:            types.Int64Value(int64(schema.Version())),
-		Reference:          FromRegistryReferences(schema.References()),
-		CompatibilityLevel: types.StringValue(FromCompatibilityLevelType(*compatibilityLevel)),
-	}
+	// Map response body to schema data source model
+	outputs := mapSchemaToOutputs(subject, schema, compatibilityLevel)
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, outputs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+}
+
+// fetchSchema retrieves the schema from the registry, either by specific version or the latest version.
+func (d *schemaDataSource) fetchSchema(subject string, version int64) (*srclient.Schema, error) {
+	if version > 0 {
+		return d.client.GetSchemaByVersion(subject, int(version))
+	}
+	return d.client.GetLatestSchema(subject)
+}
+
+// fetchCompatibilityLevel retrieves the compatibility level for the given subject.
+func (d *schemaDataSource) fetchCompatibilityLevel(subject string) (*srclient.CompatibilityLevel, error) {
+	return d.client.GetCompatibilityLevel(subject, true)
+}
+
+// mapSchemaToOutputs maps the schema and compatibility level to the schema data source model.
+func mapSchemaToOutputs(subject string, schema *srclient.Schema, compatibilityLevel *srclient.CompatibilityLevel) schemaDataSourceModel {
+	return schemaDataSourceModel{
+		ID:                 types.StringValue(subject),
+		Subject:            types.StringValue(subject),
+		Schema:             types.StringValue(schema.Schema()),
+		SchemaID:           types.Int64Value(int64(schema.ID())),
+		SchemaType:         types.StringValue(FromSchemaType(schema.SchemaType())),
+		Version:            types.Int64Value(int64(schema.Version())),
+		Reference:          FromRegistryReferences(schema.References()),
+		CompatibilityLevel: types.StringValue(FromCompatibilityLevelType(*compatibilityLevel)),
 	}
 }
