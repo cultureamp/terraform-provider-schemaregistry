@@ -1,37 +1,43 @@
-default: build
+DOCKER_COMPOSE_RUN := docker compose run --rm
 
-# Run acceptance tests (these tests interact with the API through the terraform test framework)
+default: help
+
 .PHONY: testacc
-testacc:
-	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+testacc: ## Run acceptance tests
+	TF_ACC=1 TESTCONTAINERS_RYUK_DISABLED=true go test ./... -v $(TESTARGS) -timeout 120m
 
 # Build the provider
 .PHONY: build
 build:
 	go build -o terraform-provider-schemaregistry
 
-# Tidy the module dependencies
 .PHONY: tidy
-tidy:
+tidy: ## Run go mod tidy
 	go mod tidy
 
 # Clean the build artifacts
 .PHONY: clean
-clean:
+clean: ## Clean up the build artifacts
 	rm -f terraform-provider-schemaregistry
 
-# Run go vet to check the code
 .PHONY: vet
-vet:
+vet: ## Run go vet
 	go vet ./...
 
-# Format the code
 .PHONY: fmt
-fmt:
+fmt: ## Run go fmt
 	go fmt ./...
 
-# Generate provider documentation for the Terraform registry
-# Requires: go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 .PHONY: docs
-docs:
+docs: ## Generate provider documentation for the Terraform registry
 	tfplugindocs
+
+# Add double hash '##' plus the help text you would like to display for "make help" against that command
+help: ### Show help for documented commands
+	@echo "-------------------------------"
+	@echo "cultureamp/terraform-provider-kafka-schema-registry"
+	@echo "-------------------------------"
+	@grep --no-filename -E '^[-a-zA-Z_:]+.*[^#]## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-28s\033[0m %s\n", $$1, $$2}' | \
+		sort
+	@echo "-------------------------------"

@@ -17,8 +17,7 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				PreConfig: func() { testAccPreConfig(t) },
-				Config:    testAccSchemaDataSourceConfig_basic(subjectName),
+				Config: testAccSchemaDataSourceConfig_basic(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"Test","fields":[{"name":"f1","type":"string"}]}`),
@@ -49,8 +48,8 @@ resource "schemaregistry_schema" "test" {
 data "schemaregistry_schema" "test" {
   subject = schemaregistry_schema.test.subject
 }
-`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:8081"),
-		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "test-user"),
-		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test-pass"),
+`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:9092"),
+		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "superuser-1"),
+		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test"),
 		subject)
 }

@@ -300,8 +300,8 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	// Hard deletes existing schema
-	err := r.client.DeleteSubject(state.Subject.ValueString(), true)
+	// Soft deletes existing schema
+	err := r.client.DeleteSubject(state.Subject.ValueString(), false)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Schema",
