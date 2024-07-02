@@ -2,14 +2,13 @@ package provider
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	tfprotov6 "github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	tc "github.com/testcontainers/testcontainers-go/modules/compose"
+	"github.com/testcontainers/testcontainers-go/modules/redpanda"
 )
 
 const (
@@ -21,36 +20,40 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 	"schemaregistry": providerserver.NewProtocol6WithError(New(testAccProviderVersion)()),
 }
 
-var compose tc.ComposeStack
-
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	var err error
-	compose, err = tc.NewDockerCompose("../../docker-compose.yaml")
+	redpandaContainer, err := redpanda.RunContainer(ctx,
+		redpanda.WithEnableSASL(),
+		redpanda.WithEnableKafkaAuthorization(),
+		redpanda.WithEnableWasmTransform(),
+		redpanda.WithNewServiceAccount("superuser-1", "test"),
+		redpanda.WithSuperusers("superuser-1", "superuser-2"),
+		redpanda.WithEnableSchemaRegistryHTTPBasicAuth(),
+	)
 	if err != nil {
-		fmt.Printf("Testcontainers failed: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to start container: %s", err)
 	}
 
-	// Bring up the stack
-	if err := compose.Up(ctx, tc.Wait(true)); err != nil {
-		fmt.Printf("Docker compose up failed: %v\n", err)
-		os.Exit(1)
+	schemaRegistryURL, err := redpandaContainer.SchemaRegistryAddress(ctx)
+	if err != nil {
+		log.Fatalf("failed to get schema registry address: %s", err)
 	}
 
-	// Wait for services to be ready
-	time.Sleep(30 * time.Second)
+	// Set environment variables for the tests to use
+	os.Setenv("SCHEMA_REGISTRY_URL", schemaRegistryURL)
+	os.Setenv("SCHEMA_REGISTRY_USERNAME", "superuser-1")
+	os.Setenv("SCHEMA_REGISTRY_PASSWORD", "test")
 
-	os.Setenv("SCHEMA_REGISTRY_URL", "http://localhost:8081")
+	// Run the tests
+	tests := m.Run()
 
-	code := m.Run()
+	// Clean up the container
+	defer func() {
+		if err := redpandaContainer.Terminate(ctx); err != nil {
+			log.Fatalf("failed to terminate container: %s", err)
+		}
+	}()
 
-	// Tear down the stack
-	if err := compose.Down(ctx, tc.RemoveOrphans(true), tc.RemoveImagesLocal); err != nil {
-		fmt.Printf("Docker compose down failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	os.Exit(code)
+	os.Exit(tests)
 }
