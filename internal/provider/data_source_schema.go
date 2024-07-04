@@ -156,13 +156,18 @@ func (d *schemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Fetch schema and compatibility level
 	schema, err := d.fetchSchema(subject, version)
 	if err != nil {
-		resp.Diagnostics.AddError("Error Reading Schema", "Could not read schema: "+err.Error())
+		resp.Diagnostics.AddError(
+			"Error Reading Schema",
+			"Could not read schema: "+err.Error())
 		return
 	}
 
 	compatibilityLevel, err := d.fetchCompatibilityLevel(subject)
 	if err != nil {
-		resp.Diagnostics.AddError("Error Reading Compatibility Level", "Could not read compatibility level: "+err.Error())
+		resp.Diagnostics.AddError(
+			"Error Reading Compatibility Level",
+			"Could not read compatibility level: "+err.Error(),
+		)
 		return
 	}
 

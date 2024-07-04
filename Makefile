@@ -6,10 +6,6 @@ default: help
 testacc: ## Run acceptance tests
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
 
-.PHONY: test-container
-test-container: ## Run acceptance tests using test-containers
-	${DOCKER_COMPOSE_RUN} -w /app/api --entrypoint "make testacc" schema-registry
-
 .PHONY: build ## Build the provider for all supported architectures
 build: build-amd64 build-arm64
 
