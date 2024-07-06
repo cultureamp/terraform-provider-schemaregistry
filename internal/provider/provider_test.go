@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 		redpanda.WithEnableKafkaAuthorization(),
 		redpanda.WithEnableWasmTransform(),
 		redpanda.WithNewServiceAccount("superuser-1", "test"),
-		redpanda.WithSuperusers("superuser-1", "superuser-2"),
+		redpanda.WithSuperusers("superuser-1"),
 		redpanda.WithEnableSchemaRegistryHTTPBasicAuth(),
 	)
 	if err != nil {

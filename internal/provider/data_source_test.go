@@ -49,8 +49,8 @@ resource "schemaregistry_schema" "test" {
 data "schemaregistry_schema" "test" {
   subject = schemaregistry_schema.test.subject
 }
-`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:8081"),
-		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "test-user"),
-		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test-pass"),
+`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:9092"),
+		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "superuser-1"),
+		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test"),
 		subject)
 }
