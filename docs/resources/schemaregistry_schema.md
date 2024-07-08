@@ -6,9 +6,7 @@ description: ""
 ---
 # schemaregistry_schema Resource
 
-`schemaregistry_schema` provides a Schema resource that enables creating, evolving, and deleting Schemas on a self-hosted Schema Registry cluster.
-
--> Note: It is recommended to set lifecycle { prevent_destroy = true } on production instances to prevent accidental schema deletion. This setting rejects plans that would destroy or recreate the schema, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+`schemaregistry_schema` provides a Schema Resource that enables creating, reading, updating and deleting Schemas on a self-hosted Schema Registry cluster.
 
 ## Usage
 
@@ -22,35 +20,9 @@ provider "schemaregistry" {
 }
 
 resource "schemaregistry_schema" "example" {
-  subject              = "example-subject"
-  schema_type          = "avro"
-  compatibility_level  = "BACKWARD"
-  schema               = <<EOF
-{
-  "type": "record",
-  "name": "Example",
-  "fields": [
-    {
-      "name": "field1",
-      "type": "string"
-    },
-    {
-      "name": "field2",
-      "type": "int"
-    }
-  ]
-}
-EOF
-
-  lifecycle {
-    prevent_destroy = true
-  }
+  subject             = "example-subject"
+  schema              = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+  schema_type         = "avro"
+  compatibility_level = "FORWARD_TRANSITIVE"
 }
 ```
-
-## Argument Reference
-
-- `subject` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
-- `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
-- `schema` - (Required String) The schema string, for example, in plaintext or as a file reference `file("./schema_version_1.avsc")`.
-- `hard_delete` - (Optional Boolean) An optional flag to control whether a schema should be soft or hard deleted. Set it to true if you want to hard delete a schema on destroy (see [Schema Deletion Guidelines](https://docs.confluent.io/platform/current/schema-registry/schema-deletion-guidelines.html#schema-deletion-guidelines) for more details). Must be unset when importing. Defaults to false (soft delete).

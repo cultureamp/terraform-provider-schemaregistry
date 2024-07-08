@@ -1,9 +1,3 @@
-provider "schemaregistry" {
-  schema_registry_url = "localhost:8081"
-  username            = "test-user"
-  password            = "test-pass"
-}
-
 data "schemaregistry_schema" "example" {
   subject = "example-subject"
 }
