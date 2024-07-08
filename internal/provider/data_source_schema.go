@@ -81,7 +81,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			},
 			"version": schema.Int64Attribute{
 				Description: "The version of the schema.",
-				Computed:    true,
+				Optional:    true,
 			},
 			"reference": schema.ListNestedAttribute{
 				Description: "The referenced schema list.",

@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
-	rName := acctest.RandomWithPrefix("tf-acc-test")
+	subjectName := acctest.RandomWithPrefix("tf-acc-test")
 	resourceName := "schemaregistry_schema.test_01"
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -17,10 +17,10 @@ func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccSchemaRegistryConfig_base(rName),
+				Config: testAccSchemaResourceConfig_single(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify schema attributes
-					resource.TestCheckResourceAttr(resourceName, "subject", rName),
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(resourceName, "schema", "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
@@ -38,10 +38,10 @@ func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccSchemaRegistryConfig_update(rName),
+				Config: testAccSchemaResourceConfig_singleUpdate(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify updated schema attributes
-					resource.TestCheckResourceAttr(resourceName, "subject", rName),
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(resourceName, "schema", "{\"type\":\"record\",\"name\":\"TestUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
@@ -52,42 +52,44 @@ func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
 		},
 	})
 }
-func testAccSchemaRegistryConfig_base(rName string) string {
-	return fmt.Sprintf(`
+
+func testAccSchemaResourceConfig_base() string {
+	const baseTemplate = `
 provider "schemaregistry" {
   schema_registry_url = "%s"
   username            = "%s"
   password            = "%s"
 }
+`
+	return fmt.Sprintf(baseTemplate,
+		getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:9092"),
+		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "superuser-1"),
+		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test"),
+	)
+}
 
+func testAccSchemaResourceConfig_single(subject string) string {
+	const singleTemplate = `
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "avro"
   compatibility_level  = "NONE"
   schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
 }
-`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:9092"),
-		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "superuser-1"),
-		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test"),
-		rName)
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(singleTemplate, subject))
 }
 
-func testAccSchemaRegistryConfig_update(rName string) string {
-	return fmt.Sprintf(`
-provider "schemaregistry" {
-  schema_registry_url = "%s"
-  username            = "%s"
-  password            = "%s"
-}
-
+func testAccSchemaResourceConfig_singleUpdate(subject string) string {
+	const updateTemplate = `
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "avro"
   compatibility_level  = "BACKWARD"
   schema               = "{\"type\":\"record\",\"name\":\"TestUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"
 }
-`, getEnvOrDefault("SCHEMA_REGISTRY_URL", "localhost:9092"),
-		getEnvOrDefault("SCHEMA_REGISTRY_USERNAME", "superuser-1"),
-		getEnvOrDefault("SCHEMA_REGISTRY_PASSWORD", "test"),
-		rName)
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(updateTemplate, subject))
 }
