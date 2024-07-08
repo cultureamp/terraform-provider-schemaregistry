@@ -17,8 +17,7 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				PreConfig: func() { testAccPreConfig(t) },
-				Config:    testAccSchemaDataSourceConfig_basic(subjectName),
+				Config: testAccSchemaDataSourceConfig_basic(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"Test","fields":[{"name":"f1","type":"string"}]}`),
