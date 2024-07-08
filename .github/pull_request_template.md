@@ -1,49 +1,40 @@
+<!---
+See what makes a good Pull Request at: https://hashicorp.github.io/terraform-provider-aws/raising-a-pull-request/
+--->
+### Description
+<!---
+Please provide a helpful description of what change this pull request will introduce.
+--->
+
+### Relations
+<!---
+If your pull request fully resolves and should automatically close the linked issue, use Closes. Otherwise, use Relates.
+
+For Example:
+
+Relates #0000
+or
+Closes #0000
+--->
+
+Closes #0000
+
+### References
+<!---
+Optionally, provide any helpful references that may help the reviewer(s).
+--->
+
+### Output from Acceptance Testing
 <!--
+Replace TestAccXXX with a pattern that matches the tests affected by this PR.
 
-This PR template is mandatory, please follow the guidance in the comments and
-fill this in rather than removing it.
+Replace ec2 with the service package corresponding to your tests.
 
-** An effective description is the minimum requirement for a PR to be approved. **
-
-PRs to this repo are an audit trail of how we allow changes to our production
-environment. Providing the context necessary to later readers and auditors is
-important: please take a moment and add whatever information you can.
-
-As a rule of thumb, the more unusual your request, the more information
-you should provide.
-
+For more information on the `-run` flag, see the `go test` documentation at https://tip.golang.org/cmd/go/#hdr-Testing_flags.
 -->
 
-## Purpose
+```console
+% make testacc TESTS=TestAccXXX PKG=ec2
 
-<!--
-
-- Emphasize the WHY over the WHAT
-- Remember your reviewer doesn't have your context, so explain the intent
-- Remember that this may be read by an auditor (or even yourself in 6 months)
-
--->
-
-## Context
-
-<!--
-
-For example:
-    Where does this fit in? Part of work stream / epic / feature
-
-    See:
-    - JIRA-12345
-    - [solution preview](confluence link)
-    - #1234 (related PR)
-
-** Be liberal with links. Reviewers and auditors need context for these changes. **
-
-Useful links include (but are not limited to):
-
-- JIRA references for the task being performed
-- Backstage and Github references for the service
-- Any previous PRs in this repository that are relevant (saves copying a lot of
-  information if this is a follow-up)
-- A failing build that this fixes
-
--->
+...
+```

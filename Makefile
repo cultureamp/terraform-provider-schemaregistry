@@ -6,14 +6,24 @@ default: help
 testacc: ## Run acceptance tests
 	TF_ACC=1 TESTCONTAINERS_RYUK_DISABLED=true go test ./... -v $(TESTARGS) -timeout 120m
 
-# Build the provider
-.PHONY: build
-build:
-	go build -o terraform-provider-schemaregistry
+.PHONY: build ## Build the provider for all supported architectures
+build: build-amd64 build-arm64
+
+.PHONY: build-amd64
+build-amd64: ## Build for amd64
+	GOARCH=amd64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-amd64
+
+.PHONY: build-arm64
+build-arm64: ## Build for arm64
+	GOARCH=arm64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-arm64
 
 .PHONY: tidy
 tidy: ## Run go mod tidy
 	go mod tidy
+
+.PHONY: download
+download: ## Run go mod download
+	go mod download
 
 # Clean the build artifacts
 .PHONY: clean

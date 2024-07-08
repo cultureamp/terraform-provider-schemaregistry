@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Schema Registry Documentation
+    url: https://docs.confluent.io/platform/current/schema-registry/index.html
+    about: For questions about usage of Schema Registry, check here.
+  - name: Schema Registry API Specification
+    url: https://github.com/confluentinc/schema-registry/blob/v7.8.0-553/core/generated/swagger-ui/schema-registry-api-spec.yaml
+    about: The version of the Schema Registry API this provider is based on.
