@@ -162,10 +162,9 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Check if the subject is already managed by Terraform
 	subject := plan.Subject.ValueString()
-
-	err := r.isSubjectManaged(ctx, subject)
+	// Check if the subject is already managed by Terraform
+	err := r.isSubjectManaged(subject)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating schema",
@@ -373,7 +372,10 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	}
 }
 
-func (r *schemaResource) isSubjectManaged(ctx context.Context, subject string) error {
+// isSubjectManaged prevents multiple Terraform resources from managing the same subject.
+// Note: difficult to test due to plugin testing limitations
+// https://github.com/hashicorp/terraform-plugin-testing/issues/85
+func (r *schemaResource) isSubjectManaged(subject string) error {
 	// Fetch the list of subjects from the schema registry
 	subjects, err := r.client.GetSubjects()
 	if err != nil {
