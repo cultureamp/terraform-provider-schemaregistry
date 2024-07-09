@@ -1,25 +1,74 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
+	"context"
+	"log"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	tfprotov6 "github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/exec"
+	"github.com/testcontainers/testcontainers-go/modules/redpanda"
 )
 
-// testAccProtoV6ProviderFactories are used to instantiate a provider during
-// acceptance testing. The factory function will be invoked for every Terraform
-// CLI command executed to create a provider server to which the CLI can
-// reattach.
+const (
+	testAccProviderVersion = "test"
+	testAccProviderType    = "schemaregistry"
+)
+
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"scaffolding": providerserver.NewProtocol6WithError(New("test")()),
+	"schemaregistry": providerserver.NewProtocol6WithError(New(testAccProviderVersion)()),
 }
 
-func testAccPreCheck(t *testing.T) {
-	// You can add code here to run prior to any test case execution, for example assertions
-	// about the appropriate environment variables being set are common to see in a pre-check
-	// function.
+type sleepCommand struct{}
+
+func (s sleepCommand) AsCommand() []string {
+	return []string{"sh", "-c", "sleep 3"}
+}
+
+func (s sleepCommand) Options() []exec.ProcessOption {
+	return nil
+}
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+
+	redpandaContainer, err := redpanda.RunContainer(ctx,
+		redpanda.WithEnableSASL(),
+		redpanda.WithEnableKafkaAuthorization(),
+		redpanda.WithEnableWasmTransform(),
+		redpanda.WithNewServiceAccount("superuser-1", "test"),
+		redpanda.WithSuperusers("superuser-1"),
+		redpanda.WithEnableSchemaRegistryHTTPBasicAuth(),
+		// Sleep to ensure container ports are mapped before proceeding
+		// https://github.com/testcontainers/testcontainers-go/issues/2543
+		testcontainers.WithStartupCommand(sleepCommand{}),
+	)
+	if err != nil {
+		log.Fatalf("failed to start container: %s", err)
+	}
+
+	schemaRegistryURL, err := redpandaContainer.SchemaRegistryAddress(ctx)
+	if err != nil {
+		log.Fatalf("failed to get schema registry address: %s", err)
+	}
+
+	// Set environment variables for the tests to use
+	os.Setenv("SCHEMA_REGISTRY_URL", schemaRegistryURL)
+	os.Setenv("SCHEMA_REGISTRY_USERNAME", "superuser-1")
+	os.Setenv("SCHEMA_REGISTRY_PASSWORD", "test")
+
+	// Run the tests
+	tests := m.Run()
+
+	// Clean up the container
+	defer func() {
+		if err := redpandaContainer.Terminate(ctx); err != nil {
+			log.Fatalf("failed to terminate container: %s", err)
+		}
+	}()
+
+	os.Exit(tests)
 }

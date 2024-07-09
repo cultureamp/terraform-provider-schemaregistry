@@ -1,1 +1,7 @@
-* @hashicorp/terraform-devex
+# Each line is a file pattern followed by one or more owners (@username or
+# email@address).
+#
+# Order is important. The last matching pattern has the most precedence.
+# @See https://help.github.com/articles/about-codeowners/
+
+*                               @cultureamp/data-services
