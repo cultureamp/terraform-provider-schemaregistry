@@ -20,6 +20,15 @@ If you want to build the provider from source, follow these steps:
 3. Build the provider using `make build`
 4. Run tests with `make testacc`
 
+## Testing the Provider
+
+The acceptance tests rely on [Testcontainers for Go (Redpanda)](https://golang.testcontainers.org/modules/redpanda/) to provide a Schema Registry API.
+
+This has some limitations:
+
+- Redpanda only supports `avro` and `protobuf` encoding, cannot test `json` schemas [[1]](https://github.com/redpanda-data/redpanda/issues/6220)
+- Testcontainers may fail to reliably start due to container port mapping flakiness [[2]](https://github.com/testcontainers/testcontainers-go/issues/2543) although a workaround has been implemented
+
 ## Using the Provider
 
 If you're building the provider, follow the instructions to [install it as a plugin](https://developer.hashicorp.com/terraform/cli/plugins#managing-plugin-installation). After placing it into your plugins directory, run `terraform init` to initialize it.

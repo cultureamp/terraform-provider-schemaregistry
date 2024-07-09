@@ -2,10 +2,13 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
@@ -53,6 +56,29 @@ func TestAccSchemaResource_CreateReadImportUpdate(t *testing.T) {
 	})
 }
 
+func TestAccSchemaResource_DuplicateSubject(t *testing.T) {
+	subjectName := acctest.RandomWithPrefix("tf-acc-test")
+	resourceName := "schemaregistry_schema.test_01"
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.7.0"))),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSchemaResourceConfig_DuplicateSubject(subjectName),
+				ExpectError: regexp.MustCompile("A schema with subject .* is already managed by another Terraform resource"),
+			},
+			{
+				// Skip deleting resource which intentionally failed to create
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/85
+				Config: testAccSchemaResourceConfig_DuplicateSubjectSkipDelete(resourceName),
+			},
+		},
+	})
+}
+
 func testAccSchemaResourceConfig_base() string {
 	const baseTemplate = `
 provider "schemaregistry" {
@@ -92,4 +118,38 @@ resource "schemaregistry_schema" "test_01" {
 `
 	return ConfigCompose(testAccSchemaResourceConfig_base(),
 		fmt.Sprintf(updateTemplate, subject))
+}
+
+func testAccSchemaResourceConfig_DuplicateSubject(subject string) string {
+	const duplicateTemplate = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "avro"
+  compatibility_level  = "BACKWARD"
+  schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+}
+
+resource "schemaregistry_schema" "test_02" {
+  subject              = "%s"
+  schema_type          = "avro"
+  compatibility_level  = "BACKWARD"
+  schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(duplicateTemplate, subject, subject))
+}
+
+func testAccSchemaResourceConfig_DuplicateSubjectSkipDelete(resource string) string {
+	const SkipDeleteTemplate = `
+removed {
+  from = %s
+
+  lifecycle {
+    destroy = false
+  }
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(SkipDeleteTemplate, resource))
 }

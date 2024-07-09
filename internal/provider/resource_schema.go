@@ -162,6 +162,18 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	// Check if the subject is already managed by Terraform
+	subject := plan.Subject.ValueString()
+
+	err := r.isSubjectManaged(ctx, subject)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating schema",
+			fmt.Sprintf("A schema with subject %s is already managed by another Terraform resource", subject),
+		)
+		return
+	}
+
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
@@ -361,6 +373,29 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	}
 }
 
+func (r *schemaResource) isSubjectManaged(ctx context.Context, subject string) error {
+	// Fetch the list of subjects from the schema registry
+	subjects, err := r.client.GetSubjects()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get subjects from schema registry: %w",
+			err,
+		)
+	}
+
+	// Check if the given subject is already managed
+	for _, existingSubject := range subjects {
+		if existingSubject == subject {
+			return fmt.Errorf(
+				"subject %s is already managed by another Terraform resource",
+				subject,
+			)
+		}
+	}
+
+	return nil
+}
+
 func FromRegistryReferences(references []srclient.Reference) types.List {
 	if len(references) == 0 {
 		return types.ListNull(types.ObjectType{
@@ -461,6 +496,8 @@ func FromSchemaType(schemaType *srclient.SchemaType) string {
 
 func ToSchemaType(schemaType string) srclient.SchemaType {
 	switch schemaType {
+	case "avro":
+		return srclient.Avro
 	case "json":
 		return srclient.Json
 	case "protobuf":
