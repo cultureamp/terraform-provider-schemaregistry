@@ -1,5 +1,5 @@
 <a href="https://terraform.io">
-    <img src="https://www.svgrepo.com/show/376353/terraform.svg" alt="Terraform logo" title="Terraform" align="left" height="50" />
+    <img src="https://www.svgrepo.com/show/448253/terraform.svg" alt="Terraform logo" title="Terraform" align="left" height="70" />
 </a>
 
 # Terraform Provider for Kafka Schema Registry

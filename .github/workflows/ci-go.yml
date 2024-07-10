@@ -59,4 +59,4 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - run: make test
+      - run: make testacc

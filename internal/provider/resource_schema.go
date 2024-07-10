@@ -180,7 +180,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Create new schema resource
-	schema, err := r.client.CreateSchema(plan.Subject.ValueString(), schemaString, schemaType, references...)
+	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating schema",
@@ -189,7 +189,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(plan.Subject.ValueString(), compatibilityLevel)
+	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error setting compatibility level",
@@ -264,13 +264,14 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Generate API request body from plan
+	subject := plan.Subject.ValueString()
 	schemaString := plan.Schema.ValueString()
 	references := ToRegistryReferences(plan.Reference)
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Update existing schema
-	schema, err := r.client.CreateSchema(plan.Subject.ValueString(), schemaString, schemaType, references...)
+	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating schema",
@@ -279,7 +280,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(plan.Subject.ValueString(), compatibilityLevel)
+	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error setting compatibility level",
@@ -342,7 +343,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Importing Compatibility Level",
+			"Error Importing Schema",
 			fmt.Sprintf("Could not retrieve compatibility level for subject %s: %s", subject,
 				err.Error(),
 			),
