@@ -4,9 +4,8 @@ run-name: Release ${{ github.sha }} by @${{ github.actor }}
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "internal/**.go"
+    tags:
+      - "v*"
 
 # Releases need permissions to read and write the repository contents.
 # GitHub considers creating releases and uploading assets as writing contents.

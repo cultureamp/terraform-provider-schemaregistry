@@ -4,7 +4,7 @@ default: help
 
 .PHONY: testacc
 testacc: ## Run acceptance tests
-	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
 
 .PHONY: build ## Build the provider for all supported architectures
 build: build-amd64 build-arm64
