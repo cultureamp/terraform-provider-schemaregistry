@@ -57,7 +57,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		Description:         "Manages a schema in the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The ID of the schema, which is the subject name.",
+				Description: "UID for the schema, which is the subject name.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -79,7 +79,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:    true,
 			},
 			"schema_type": schema.StringAttribute{
-				Description: "The schema type. Default is avro.",
+				Description: "The schema format.",
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -163,12 +163,12 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	subject := plan.Subject.ValueString()
-	// Check if the subject is already managed by Terraform
+	// Check if the subject is already managed in schema registry
 	err := r.isSubjectManaged(subject)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating schema",
-			fmt.Sprintf("A schema with subject %s is already managed by another Terraform resource", subject),
+			fmt.Sprintf("Error checking if subject is managed: %s", err),
 		)
 		return
 	}
@@ -381,16 +381,17 @@ func (r *schemaResource) isSubjectManaged(subject string) error {
 	subjects, err := r.client.GetSubjects()
 	if err != nil {
 		return fmt.Errorf(
-			"failed to get subjects from schema registry: %w",
+			"Failed to get subjects from schema registry: %w",
 			err,
 		)
 	}
 
-	// Check if the given subject is already managed
+	// Check if the given subject is already managed in the schema registry
 	for _, existingSubject := range subjects {
 		if existingSubject == subject {
 			return fmt.Errorf(
-				"subject %s is already managed by another Terraform resource",
+				"Subject %s already exists in the schema registry."+
+					"Please import this resource into Terraform using `terraform import`.",
 				subject,
 			)
 		}
