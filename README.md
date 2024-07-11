@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 MD041 -->
 <a href="https://terraform.io">
     <img src="https://www.svgrepo.com/show/448253/terraform.svg" alt="Terraform logo" title="Terraform" align="left" height="70" />
 </a>
