@@ -2,11 +2,14 @@ package provider
 
 import (
 	"context"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/riferrei/srclient"
@@ -39,6 +42,12 @@ type ProviderModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
+const (
+	schemaRegistryURLPattern = `^https?://.*$`
+)
+
+var schemaRegistryURLRegex = regexp.MustCompile(schemaRegistryURLPattern)
+
 // Metadata returns the provider type name.
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest,
 	resp *provider.MetadataResponse) {
@@ -54,6 +63,11 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest,
 			"schema_registry_url": schema.StringAttribute{
 				Description: "URI for Schema Registry API. May use SCHEMA_REGISTRY_URL environment variable.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(schemaRegistryURLRegex,
+						"Schema Registry URL must start with http or https",
+					),
+				},
 			},
 			"username": schema.StringAttribute{
 				Description: "Username for Schema Registry API. May use SCHEMA_REGISTRY_USERNAME environment variable.",
