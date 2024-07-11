@@ -53,7 +53,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 		Description:         "Fetches a schema from the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The ID of the schema, which is the subject name.",
+				Description: "UID for the schema, which is the subject name.",
 				Computed:    true,
 			},
 			"subject": schema.StringAttribute{
@@ -69,7 +69,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Computed:    true,
 			},
 			"schema_type": schema.StringAttribute{
-				Description: "The schema type. Default is avro.",
+				Description: "The schema format.",
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
