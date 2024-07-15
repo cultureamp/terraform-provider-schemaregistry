@@ -18,6 +18,15 @@ resource "schemaregistry_schema" "example" {
   schema_type         = "avro"
   compatibility_level = "FORWARD_TRANSITIVE"
   schema              = "example"
+
+  # optional list of schema references
+  references = [
+    {
+      name    = "ref-schema-name-1"
+      subject = schemaregistry_schema.ref_schema_1.subject
+      version = schemaregistry_schema.ref_schema_1.version
+    },
+  ]
 }
 ```
 
@@ -29,7 +38,7 @@ The following arguments are supported:
 * `schema_type` - (Required) The schema type.
 * `compatibility_level` - (Required) The schema compatibility level.
 * `schema` - (Required) The schema string.
-* `reference` - (Optional) The referenced schema list.
+* `references` - (Optional) The referenced schema list.
 
 ## Attributes Reference
 
