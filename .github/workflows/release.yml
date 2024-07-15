@@ -12,14 +12,12 @@ on:
       - "go.sum"
 
 permissions:
-  contents: read
+  contents: write # to be able to publish a GitHub release
+  issues: write # to be able to comment on released issues
+  pull-requests: write # to be able to comment on released pull requests
 
 jobs:
   release:
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
     name: Release
     runs-on: ubuntu-latest
     steps:
@@ -44,18 +42,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-
-  changelog:
-    needs: release
-    name: Generate Changelog
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: go-semantic-release/action@079e195a22e6f55af6c17945090eb6cce603f9a5 # v2.30.0
+      - name: Generate Changelog
+        id: changelog
+        uses: go-semantic-release/action@079e195a22e6f55af6c17945090eb6cce603f9a5 # v2.30.0
         with:
           changelog-file: CHANGELOG.md
           changelog-generator-opt: "emojis=true"
@@ -63,9 +52,25 @@ jobs:
           prepend: true # prepend new changelog to the existing one
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          git config --local user.name 'semantic-release[bot]'
-          git config --local user.email 'semantic-release[bot]@users.noreply.github.com'
+      - name: Create Pull Request
+        if: steps.changelog.outputs.changelog != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+
+          BRANCH="chore/update-changelog-${{ github.ref_name }}"
+          git checkout -b $BRANCH
+
           git add CHANGELOG.md
           git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
-          git push origin HEAD:main
+          git push origin $BRANCH
+
+          gh pr create \
+            --title "chore(release): update changelog after ${{ github.ref_name }}" \
+            --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
+            --label release \
+            --assignee ${{ github.actor }} \
+            --head $BRANCH \
+            --base main
