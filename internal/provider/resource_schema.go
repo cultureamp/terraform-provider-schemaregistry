@@ -40,7 +40,7 @@ type schemaResourceModel struct {
 	SchemaID           types.Int64  `tfsdk:"schema_id"`
 	SchemaType         types.String `tfsdk:"schema_type"`
 	Version            types.Int64  `tfsdk:"version"`
-	Reference          types.List   `tfsdk:"reference"`
+	Reference          types.List   `tfsdk:"references"`
 	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
 }
 
@@ -96,7 +96,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Description: "The version of the schema.",
 				Computed:    true,
 			},
-			"reference": schema.ListNestedAttribute{
+			"references": schema.ListNestedAttribute{
 				Description: "The referenced schema list.",
 				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -374,8 +374,6 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 }
 
 // isSubjectManaged prevents multiple Terraform resources from managing the same subject.
-// Note: difficult to test due to plugin testing limitations
-// https://github.com/hashicorp/terraform-plugin-testing/issues/85
 func (r *schemaResource) isSubjectManaged(subject string) error {
 	// Fetch the list of subjects from the schema registry
 	subjects, err := r.client.GetSubjects()
@@ -401,24 +399,22 @@ func (r *schemaResource) isSubjectManaged(subject string) error {
 }
 
 func FromRegistryReferences(references []srclient.Reference) types.List {
+	referenceType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"name":    types.StringType,
+			"subject": types.StringType,
+			"version": types.Int64Type,
+		},
+	}
+
 	if len(references) == 0 {
-		return types.ListNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"name":    types.StringType,
-				"subject": types.StringType,
-				"version": types.Int64Type,
-			},
-		})
+		return types.ListNull(referenceType)
 	}
 
 	var elems []attr.Value
 	for _, reference := range references {
 		objectValue, diags := types.ObjectValue(
-			map[string]attr.Type{
-				"name":    types.StringType,
-				"subject": types.StringType,
-				"version": types.Int64Type,
-			},
+			referenceType.AttrTypes,
 			map[string]attr.Value{
 				"name":    types.StringValue(reference.Name),
 				"subject": types.StringValue(reference.Subject),
@@ -426,32 +422,15 @@ func FromRegistryReferences(references []srclient.Reference) types.List {
 			},
 		)
 		if diags.HasError() {
-			// Log error and skip this reference
 			fmt.Printf("Error converting reference to object value: %v\n", diags)
 			continue
 		}
 		elems = append(elems, objectValue)
 	}
 
-	listValue, diags := types.ListValue(
-		types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"name":    types.StringType,
-				"subject": types.StringType,
-				"version": types.Int64Type,
-			},
-		},
-		elems,
-	)
+	listValue, diags := types.ListValue(referenceType, elems)
 	if diags.HasError() {
-		// Log error and return null list
-		return types.ListNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"name":    types.StringType,
-				"subject": types.StringType,
-				"version": types.Int64Type,
-			},
-		})
+		return types.ListNull(referenceType)
 	}
 
 	return listValue
@@ -464,28 +443,30 @@ func ToRegistryReferences(references types.List) []srclient.Reference {
 
 	var refs []srclient.Reference
 	for _, reference := range references.Elements() {
-		r, ok := reference.(types.Object)
-		if !ok {
-			// Log error and skip this reference
-			fmt.Printf("Error converting reference to object value: %v\n", reference)
-			continue
-		}
-		attributes := r.Attributes()
-		name, nameOk := attributes["name"].(types.String)
-		subject, subjectOk := attributes["subject"].(types.String)
-		version, versionOk := attributes["version"].(types.Int64)
+		if !reference.IsNull() && !reference.IsUnknown() {
+			ref, ok := reference.(types.Object)
+			if !ok {
+				fmt.Printf("Invalid reference object type: %v\n", reference)
+				continue
+			}
 
-		if !nameOk || !subjectOk || !versionOk {
-			// Log error and skip this reference
-			fmt.Printf("Error extracting attributes from reference object: %v\n", attributes)
-			continue
-		}
+			attributes := ref.Attributes()
+			nameAttr, nameOk := attributes["name"].(types.String)
+			subjectAttr, subjectOk := attributes["subject"].(types.String)
+			versionAttr, versionOk := attributes["version"].(types.Int64)
 
-		refs = append(refs, srclient.Reference{
-			Name:    name.ValueString(),
-			Subject: subject.ValueString(),
-			Version: int(version.ValueInt64()),
-		})
+			if !nameOk || !subjectOk || !versionOk {
+				// Log error and skip this reference
+				fmt.Printf("Error extracting attributes from reference object: %v\n", attributes)
+				continue
+			}
+
+			refs = append(refs, srclient.Reference{
+				Name:    nameAttr.ValueString(),
+				Subject: subjectAttr.ValueString(),
+				Version: int(versionAttr.ValueInt64()),
+			})
+		}
 	}
 
 	return refs

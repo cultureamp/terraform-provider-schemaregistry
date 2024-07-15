@@ -39,7 +39,7 @@ terraform {
   required_providers {
     schemaregistry = {
       source = "../schemaregistry"
-      version = "0.1.0"
+      version = "0.1.2"
     }
   }
 }
@@ -54,6 +54,15 @@ resource "schemaregistry_schema" "example" {
   subject              = "example"
   schema_type          = "avro"
   compatibility_level  = "NONE"
-  schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+  schema               = file("path/to/your/schema.avsc")
+
+  # optional list of schema references
+  references = [
+    {
+      name    = "ref-schema-name-1"
+      subject = schemaregistry_schema.ref_schema_1.subject
+      version = schemaregistry_schema.ref_schema_1.version
+    },
+  ]
 }
 ```
