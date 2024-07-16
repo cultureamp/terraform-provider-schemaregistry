@@ -1,21 +1,38 @@
 DOCKER_COMPOSE_RUN := docker compose run --rm
+VERSION ?= 1.0.0
+PROVIDER_NAME = terraform-provider-kafka-schema-registry
+ARCHS = amd64 arm64 arm 386
+PLATFORMS = linux darwin windows freebsd
+UNSUPPORTED_COMBOS = darwin/arm darwin/386
 
 default: help
+
+.PHONY: all
+all: ## Build and zip the provider for all supported platforms and architectures
+all: $(foreach platform,$(PLATFORMS),$(foreach arch,$(ARCHS),build-zip-$(platform)-$(arch)))
+
+define build_zip_target
+.PHONY: build-zip-$(1)-$(2)
+build-zip-$(1)-$(2):
+	@echo "Building and zipping for GOOS=$(1) GOARCH=$(2)"
+	@if [ "$(filter $(1)/$(2), $(UNSUPPORTED_COMBOS))" ]; then \
+		echo "Skipping unsupported GOOS/GOARCH pair: $(1)/$(2)"; \
+	else \
+		GOOS=$(1) GOARCH=$(2) go build -o $(PROVIDER_NAME)_$(1)_$(2)$(if $(findstring windows,$(1)),.exe,); \
+		zip $(PROVIDER_NAME)_$(VERSION)_$(1)_$(2).zip $(PROVIDER_NAME)_$(1)_$(2)$(if $(findstring windows,$(1)),.exe,); \
+		rm $(PROVIDER_NAME)_$(1)_$(2)$(if $(findstring windows,$(1)),.exe,); \
+	fi
+endef
+
+$(foreach platform,$(PLATFORMS),$(foreach arch,$(ARCHS),$(eval $(call build_zip_target,$(platform),$(arch)))))
+
+.PHONY: build
+build: ## Build the provider for the current architecture
+	GOARCH=$(shell go env GOARCH) GOOS=$(shell go env GOOS) go build -o $(PROVIDER_NAME)_$(shell go env GOOS)_$(shell go env GOARCH)
 
 .PHONY: testacc
 testacc: ## Run acceptance tests
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
-
-.PHONY: build ## Build the provider for all supported architectures
-build: build-amd64 build-arm64
-
-.PHONY: build-amd64
-build-amd64: ## Build for amd64
-	GOARCH=amd64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-amd64
-
-.PHONY: build-arm64
-build-arm64: ## Build for arm64
-	GOARCH=arm64 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]') go build -o terraform-provider-schemaregistry-arm64
 
 .PHONY: tidy
 tidy: ## Run go mod tidy

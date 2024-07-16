@@ -38,8 +38,8 @@ If you're building the provider, follow the instructions to [install it as a plu
 terraform {
   required_providers {
     schemaregistry = {
-      source = "../schemaregistry"
-      version = "0.1.2"
+      source = "cultureamp/kafka-schema-registry"
+      version = "1.0.0"
     }
   }
 }
