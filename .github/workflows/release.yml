@@ -3,6 +3,9 @@ name: Release
 run-name: Release ${{ github.sha }} by @${{ github.actor }}
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
   push:
     branches:
       - main
