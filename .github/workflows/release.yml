@@ -10,6 +10,7 @@ on:
       - "**/**.go"
       - "go.mod"
       - "go.sum"
+      - ".github/workflows/release.yml"
 
 permissions:
   contents: write # to be able to publish a GitHub release
@@ -36,7 +37,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: Run go-semantic-release
-        uses: go-semantic-release/action@079e195a22e6f55af6c17945090eb6cce603f9a5 # v2.30.0
+        uses: go-semantic-release/action@v1
         with:
           hooks: goreleaser
         env:
@@ -44,7 +45,7 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
       - name: Generate Changelog
         id: changelog
-        uses: go-semantic-release/action@079e195a22e6f55af6c17945090eb6cce603f9a5 # v2.30.0
+        uses: go-semantic-release/action@v1
         with:
           changelog-file: CHANGELOG.md
           changelog-generator-opt: "emojis=true"
