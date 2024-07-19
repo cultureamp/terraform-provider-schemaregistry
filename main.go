@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/cultureamp/terraform-provider-kafka-schema-registry/internal/provider"
+	"github.com/cultureamp/terraform-provider-schema-registry/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "github.com/cultureamp/terraform-provider-kafka-schema-registry", // This can be any string, it's just an identifier
+		Address: "github.com/cultureamp/terraform-provider-schema-registry", // This can be any string, it's just an identifier
 		Debug:   debug,
 	}
 
