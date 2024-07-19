@@ -1,4 +1,4 @@
-module github.com/cultureamp/terraform-provider-kafka-schema-registry
+module github.com/cultureamp/terraform-provider-schema-registry
 
 go 1.21
 
@@ -136,5 +136,5 @@ require (
 )
 
 // replace (
-// 	github.com/cultureamp/terraform-provider-kafka-schema-registry/internal/provider => ./internal/provider
+// 	github.com/cultureamp/terraform-provider-schema-registry/internal/provider => ./internal/provider
 // )

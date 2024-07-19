@@ -1,9 +1,9 @@
 ---
 layout: "schema registry"
-page_title: "Provider: Kafka Schema Registry"
+page_title: "Provider: Schema Registry"
 sidebar_current: "docs-schema registry-index"
 description: |-
-  The Kafka Schema Registry provider to interact with schemas
+  The Schema Registry provider to interact with schemas
 ---
 
 # Schema Registry Provider

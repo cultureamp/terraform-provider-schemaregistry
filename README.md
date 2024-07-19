@@ -3,7 +3,7 @@
     <img src="https://www.svgrepo.com/show/448253/terraform.svg" alt="Terraform logo" title="Terraform" align="left" height="70" />
 </a>
 
-# Terraform Provider for Kafka Schema Registry
+# Terraform Provider for Schema Registry
 
 This provider is built using the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework).
 
@@ -38,7 +38,7 @@ If you're building the provider, follow the instructions to [install it as a plu
 terraform {
   required_providers {
     schemaregistry = {
-      source = "cultureamp/kafka-schema-registry"
+      source = "cultureamp/schema-registry"
       version = "1.0.0"
     }
   }
