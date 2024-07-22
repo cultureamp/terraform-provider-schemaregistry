@@ -1,6 +1,6 @@
 module github.com/cultureamp/terraform-provider-schema-registry
 
-go 1.21
+go 1.21.0
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
