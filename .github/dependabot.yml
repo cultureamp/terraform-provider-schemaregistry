@@ -1,6 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: gomod
-    directory: /
+  - package-ecosystem: "gomod"
+    directory: "/"
     schedule:
-      interval: weekly
+      interval: "weekly"
+      time: "22:00" # 10pm UTC
+    groups:
+      all-minor-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
