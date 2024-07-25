@@ -8,43 +8,30 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	tfprotov6 "github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/exec"
 	"github.com/testcontainers/testcontainers-go/modules/redpanda"
 )
 
 const (
 	testAccProviderVersion = "test"
 	testAccProviderType    = "schemaregistry"
+	redpandaContainerImage = "docker.redpanda.com/redpandadata/redpanda:v23.3.3"
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"schemaregistry": providerserver.NewProtocol6WithError(New(testAccProviderVersion)()),
 }
 
-type sleepCommand struct{}
-
-func (s sleepCommand) AsCommand() []string {
-	return []string{"sh", "-c", "sleep 3"}
-}
-
-func (s sleepCommand) Options() []exec.ProcessOption {
-	return nil
-}
-
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	redpandaContainer, err := redpanda.RunContainer(ctx,
+	redpandaContainer, err := redpanda.Run(ctx,
+		redpandaContainerImage,
 		redpanda.WithEnableSASL(),
 		redpanda.WithEnableKafkaAuthorization(),
 		redpanda.WithEnableWasmTransform(),
 		redpanda.WithNewServiceAccount("superuser-1", "test"),
 		redpanda.WithSuperusers("superuser-1"),
 		redpanda.WithEnableSchemaRegistryHTTPBasicAuth(),
-		// Sleep to ensure container ports are mapped before proceeding
-		// https://github.com/testcontainers/testcontainers-go/issues/2543
-		testcontainers.WithStartupCommand(sleepCommand{}),
 	)
 	if err != nil {
 		log.Fatalf("failed to start container: %s", err)

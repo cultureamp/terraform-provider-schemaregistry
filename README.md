@@ -28,7 +28,6 @@ The acceptance tests rely on [Testcontainers for Go (Redpanda)](https://golang.t
 This has some limitations:
 
 - Redpanda only supports `avro` and `protobuf` encoding, cannot test `json` schemas [[1]](https://github.com/redpanda-data/redpanda/issues/6220)
-- Testcontainers may fail to reliably start due to container port mapping flakiness [[2]](https://github.com/testcontainers/testcontainers-go/issues/2543) although a workaround has been implemented
 
 ## Using the Provider
 
