@@ -1,6 +1,6 @@
 DOCKER_COMPOSE_RUN := docker compose run --rm
 VERSION ?= 1.0.0
-PROVIDER_NAME = terraform-provider-schema-registry
+PROVIDER_NAME = terraform-provider-schemaregistry
 ARCHS = amd64 arm64 arm 386
 PLATFORMS = linux darwin windows freebsd
 UNSUPPORTED_COMBOS = darwin/arm darwin/386
@@ -62,7 +62,7 @@ docs: ## Generate provider documentation for the Terraform registry
 # Add double hash '##' plus the help text you would like to display for "make help" against that command
 help: ### Show help for documented commands
 	@echo "-------------------------------"
-	@echo "cultureamp/terraform-provider-schema-registry"
+	@echo "cultureamp/terraform-provider-schemaregistry"
 	@echo "-------------------------------"
 	@grep --no-filename -E '^[-a-zA-Z_:]+.*[^#]## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-28s\033[0m %s\n", $$1, $$2}' | \

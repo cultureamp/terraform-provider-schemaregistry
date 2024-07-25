@@ -28,6 +28,6 @@ To report a security vulnerability, please follow these steps:
 
 - Security updates are released as soon as a vulnerability is confirmed.
 - Users should upgrade to the latest version for security patches.
-- Updates are posted on our [security advisory page](https://github.com/cultureamp/terraform-provider-schema-registry/security/advisories).
+- Updates are posted on our [security advisory page](https://github.com/cultureamp/terraform-provider-schemaregistry/security/advisories).
 
 Thank you for helping us maintain the security of our project.
