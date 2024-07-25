@@ -1,4 +1,4 @@
-module github.com/cultureamp/terraform-provider-schema-registry
+module github.com/cultureamp/terraform-provider-schemaregistry
 
 go 1.21.0
 
@@ -136,5 +136,5 @@ require (
 )
 
 // replace (
-// 	github.com/cultureamp/terraform-provider-schema-registry/internal/provider => ./internal/provider
+// 	github.com/cultureamp/terraform-provider-schemaregistry/internal/provider => ./internal/provider
 // )

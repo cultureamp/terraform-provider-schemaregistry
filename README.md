@@ -38,14 +38,14 @@ If you're building the provider, follow the instructions to [install it as a plu
 terraform {
   required_providers {
     schemaregistry = {
-      source = "cultureamp/schema-registry"
+      source = "cultureamp/schemaregistry"
       version = "1.0.0"
     }
   }
 }
 
 provider "schemaregistry" {
-  schema_registry_url = "https://schema-registry.example.com"
+  schema_registry_url = "https://schemaregistry.example.com"
   username            = "your-username"
   password            = "your-password"
 }
