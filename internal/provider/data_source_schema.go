@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -30,14 +31,14 @@ type schemaDataSource struct {
 
 // schemaDataSourceModel describes the data source data model.
 type schemaDataSourceModel struct {
-	ID                 types.String `tfsdk:"id"`
-	Subject            types.String `tfsdk:"subject"`
-	Schema             types.String `tfsdk:"schema"`
-	SchemaID           types.Int64  `tfsdk:"schema_id"`
-	SchemaType         types.String `tfsdk:"schema_type"`
-	Version            types.Int64  `tfsdk:"version"`
-	Reference          types.List   `tfsdk:"reference"`
-	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
+	ID                 types.String    `tfsdk:"id"`
+	Subject            types.String    `tfsdk:"subject"`
+	Schema             jsontypes.Exact `tfsdk:"schema"`
+	SchemaID           types.Int64     `tfsdk:"schema_id"`
+	SchemaType         types.String    `tfsdk:"schema_type"`
+	Version            types.Int64     `tfsdk:"version"`
+	Reference          types.List      `tfsdk:"reference"`
+	CompatibilityLevel types.String    `tfsdk:"compatibility_level"`
 }
 
 // Metadata returns the data source type name.
@@ -63,6 +64,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"schema": schema.StringAttribute{
 				Description: "The schema string.",
 				Computed:    true,
+				CustomType:  jsontypes.ExactType{},
 			},
 			"schema_id": schema.Int64Attribute{
 				Description: "The ID of the schema.",
@@ -200,7 +202,7 @@ func mapSchemaToOutputs(subject string, schema *srclient.Schema, compatibilityLe
 	return schemaDataSourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             types.StringValue(schema.Schema()),
+		Schema:             jsontypes.NewExactValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(FromSchemaType(schema.SchemaType())),
 		Version:            types.Int64Value(int64(schema.Version())),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -34,14 +35,14 @@ type schemaResource struct {
 
 // schemaResourceModel describes the resource data model.
 type schemaResourceModel struct {
-	ID                 types.String `tfsdk:"id"`
-	Subject            types.String `tfsdk:"subject"`
-	Schema             types.String `tfsdk:"schema"`
-	SchemaID           types.Int64  `tfsdk:"schema_id"`
-	SchemaType         types.String `tfsdk:"schema_type"`
-	Version            types.Int64  `tfsdk:"version"`
-	Reference          types.List   `tfsdk:"references"`
-	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
+	ID                 types.String         `tfsdk:"id"`
+	Subject            types.String         `tfsdk:"subject"`
+	Schema             jsontypes.Normalized `tfsdk:"schema"`
+	SchemaID           types.Int64          `tfsdk:"schema_id"`
+	SchemaType         types.String         `tfsdk:"schema_type"`
+	Version            types.Int64          `tfsdk:"version"`
+	Reference          types.List           `tfsdk:"references"`
+	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
 }
 
 // Metadata returns the resource type name.
@@ -57,7 +58,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		Description:         "Manages a schema in the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "UID for the schema, which is the subject name.",
+				Description: "The globally unique ID of the schema.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -71,8 +72,12 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"schema": schema.StringAttribute{
-				Description: "The schema string.",
+				Description: "The schema definition.",
 				Required:    true,
+				CustomType:  jsontypes.NormalizedType{},
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(2),
+				},
 			},
 			"schema_id": schema.Int64Attribute{
 				Description: "The ID of the schema.",
@@ -104,10 +109,16 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						"name": schema.StringAttribute{
 							Description: "The referenced schema name.",
 							Required:    true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(1),
+							},
 						},
 						"subject": schema.StringAttribute{
 							Description: "The referenced schema subject.",
 							Required:    true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(1),
+							},
 						},
 						"version": schema.Int64Attribute{
 							Description: "The referenced schema version.",
@@ -117,7 +128,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"compatibility_level": schema.StringAttribute{
-				Description: "The compatibility level of the schema. Default is FORWARD_TRANSITIVE.",
+				Description: "The compatibility level of the schema.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -203,7 +214,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Map response body to schema
 	plan.ID = plan.Subject
-	plan.Schema = types.StringValue(schema.Schema())
+	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.SchemaType = types.StringValue(schemaTypeStr)
 	plan.Version = types.Int64Value(1) // Set the version to 1 for new schema
@@ -239,7 +250,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	schemaType := FromSchemaType(schema.SchemaType())
 
 	// Update state with refreshed values
-	state.Schema = types.StringValue(schema.Schema())
+	state.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	state.SchemaID = types.Int64Value(int64(schema.ID()))
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
@@ -290,7 +301,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
-	plan.Schema = types.StringValue(schema.Schema())
+	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = FromRegistryReferences(schema.References())
@@ -357,7 +368,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	state := schemaResourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             types.StringValue(schema.Schema()),
+		Schema:             jsontypes.NewNormalizedValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(schemaType),
 		Version:            types.Int64Value(int64(schema.Version())),
