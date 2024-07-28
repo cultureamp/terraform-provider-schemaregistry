@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -51,8 +50,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify schema attributes
 					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(resourceName, "schema",
-						jsontypes.NewNormalizedValue(initialSchema).ValueString()),
+					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(initialSchema)),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
@@ -61,10 +59,9 @@ func TestAccSchemaResource_basic(t *testing.T) {
 			},
 			// ImportState testing
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				// No attributes to ignore during import
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{},
 			},
 			// Update testing
@@ -73,8 +70,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify updated schema attributes
 					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(resourceName, "schema",
-						jsontypes.NewNormalizedValue(updatedSchema).ValueString()),
+					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(updatedSchema)),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
@@ -191,14 +187,36 @@ resource "schemaregistry_schema" "ref_01" {
   subject              = "%s"
   schema_type          = "avro"
   compatibility_level  = "NONE"
-  schema               = "{\"type\":\"record\",\"name\":\"TestRefUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+  schema               = jsonencode({
+    "type": "record",
+    "name": "TestRefUpdated",
+    "fields": [
+      {
+        "name": "f1",
+        "type": "string"
+      }
+    ]
+  })
 }
 
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "avro"
   compatibility_level  = "BACKWARD"
-  schema               = "{\"type\":\"record\",\"name\":\"TestUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"
+  schema               = jsonencode({
+    "type": "record",
+    "name": "TestUpdated",
+    "fields": [
+      {
+        "name": "f1",
+        "type": "string"
+      },
+      {
+        "name": "f2",
+        "type": "int"
+      }
+    ]
+  })
   references = [
     {
       name    = "TestRefUpdated"
