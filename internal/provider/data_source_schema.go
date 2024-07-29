@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/riferrei/srclient"
@@ -30,14 +32,14 @@ type schemaDataSource struct {
 
 // schemaDataSourceModel describes the data source data model.
 type schemaDataSourceModel struct {
-	ID                 types.String `tfsdk:"id"`
-	Subject            types.String `tfsdk:"subject"`
-	Schema             types.String `tfsdk:"schema"`
-	SchemaID           types.Int64  `tfsdk:"schema_id"`
-	SchemaType         types.String `tfsdk:"schema_type"`
-	Version            types.Int64  `tfsdk:"version"`
-	Reference          types.List   `tfsdk:"reference"`
-	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
+	ID                 types.String         `tfsdk:"id"`
+	Subject            types.String         `tfsdk:"subject"`
+	Schema             jsontypes.Normalized `tfsdk:"schema"`
+	SchemaID           types.Int64          `tfsdk:"schema_id"`
+	SchemaType         types.String         `tfsdk:"schema_type"`
+	Version            types.Int64          `tfsdk:"version"`
+	Reference          types.List           `tfsdk:"reference"`
+	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
 }
 
 // Metadata returns the data source type name.
@@ -63,6 +65,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"schema": schema.StringAttribute{
 				Description: "The schema string.",
 				Computed:    true,
+				CustomType:  jsontypes.NormalizedType{},
 			},
 			"schema_id": schema.Int64Attribute{
 				Description: "The ID of the schema.",
@@ -172,7 +175,7 @@ func (d *schemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	// Map response body to schema data source model
-	outputs := mapSchemaToOutputs(subject, schema, compatibilityLevel)
+	outputs := d.mapSchemaToOutputs(subject, schema, compatibilityLevel, &resp.Diagnostics)
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, outputs)
@@ -196,11 +199,22 @@ func (d *schemaDataSource) fetchCompatibilityLevel(subject string) (*srclient.Co
 }
 
 // mapSchemaToOutputs maps the schema and compatibility level to the schema data source model.
-func mapSchemaToOutputs(subject string, schema *srclient.Schema, compatibilityLevel *srclient.CompatibilityLevel) schemaDataSourceModel {
+func (d *schemaDataSource) mapSchemaToOutputs(subject string, schema *srclient.Schema,
+	compatibilityLevel *srclient.CompatibilityLevel, diagnostics *diag.Diagnostics) schemaDataSourceModel {
+	// Normalize the schema string
+	normalizedSchema, err := NormalizeJSON(schema.Schema(), diagnostics)
+	if err != nil {
+		diagnostics.AddError(
+			"Normalization Error",
+			fmt.Sprintf("Could not normalize schema: %s", err),
+		)
+		return schemaDataSourceModel{}
+	}
+
 	return schemaDataSourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             types.StringValue(schema.Schema()),
+		Schema:             jsontypes.NewNormalizedValue(normalizedSchema),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(FromSchemaType(schema.SchemaType())),
 		Version:            types.Int64Value(int64(schema.Version())),

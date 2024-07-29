@@ -19,7 +19,7 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 				Config: testAccSchemaDataSourceConfig_single(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"Test","fields":[{"name":"f1","type":"string"}]}`),
+					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
@@ -41,7 +41,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"Test","fields":[{"name":"f1","type":"string"}]}`),
+					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
@@ -52,7 +52,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int"}]}`),
+					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 				),
@@ -63,7 +63,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int"}]}`),
+					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttr(datasourceName, "version", "2"),
@@ -94,11 +94,24 @@ resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "avro"
   compatibility_level  = "NONE"
-  schema               = "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"}]}"
+  schema               = jsonencode({
+  "type": "record",
+  "name": "Test",
+  "fields": [
+    {
+      "name": "f1",
+      "type": "string"
+    }
+  ]
+})
 }
 
 data "schemaregistry_schema" "test_01" {
   subject = schemaregistry_schema.test_01.subject
+}
+
+output "schema" {
+  value = data.schemaregistry_schema.test_01.schema
 }
 `
 	return ConfigCompose(testAccSchemaDataSourceConfig_base(),
@@ -108,14 +121,31 @@ data "schemaregistry_schema" "test_01" {
 func testAccSchemaDataSourceConfig_update(subject string) string {
 	const updateTemplate = `
 resource "schemaregistry_schema" "test_01" {
-  subject              = "%s"
-  schema_type          = "avro"
-  compatibility_level  = "BACKWARD"
-  schema               = "{\"type\":\"record\",\"name\":\"TestUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"
+  subject             = "%s"
+  schema_type         = "avro"
+  compatibility_level = "BACKWARD"
+  schema              = jsonencode({
+    type = "record",
+    name = "TestUpdated",
+    fields = [
+      {
+        name = "f1",
+        type = "string"
+      },
+      {
+        name = "f2",
+        type = "int"
+      }
+    ]
+  })
 }
 
 data "schemaregistry_schema" "test_01" {
   subject = schemaregistry_schema.test_01.subject
+}
+
+output "schema" {
+  value = data.schemaregistry_schema.test_01.schema
 }
 `
 	return ConfigCompose(testAccSchemaDataSourceConfig_base(),
@@ -125,15 +155,32 @@ data "schemaregistry_schema" "test_01" {
 func testAccSchemaDataSourceConfig_specificVersion(subject string, version int) string {
 	const specificVersionTemplate = `
 resource "schemaregistry_schema" "test_01" {
-  subject              = "%s"
-  schema_type          = "avro"
-  compatibility_level  = "BACKWARD"
-  schema               = "{\"type\":\"record\",\"name\":\"TestUpdated\",\"fields\":[{\"name\":\"f1\",\"type\":\"string\"},{\"name\":\"f2\",\"type\":\"int\"}]}"
+  subject             = "%s"
+  schema_type         = "avro"
+  compatibility_level = "BACKWARD"
+  schema              = jsonencode({
+    type = "record",
+    name = "TestUpdated",
+    fields = [
+      {
+        name = "f1",
+        type = "string"
+      },
+      {
+        name = "f2",
+        type = "int"
+      }
+    ]
+  })
 }
 
 data "schemaregistry_schema" "test_01" {
   subject = schemaregistry_schema.test_01.subject
   version = %d
+}
+
+output "schema" {
+  value = data.schemaregistry_schema.test_01.schema
 }
 `
 	return ConfigCompose(testAccSchemaDataSourceConfig_base(),
