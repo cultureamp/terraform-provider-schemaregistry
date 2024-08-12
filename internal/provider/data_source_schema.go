@@ -76,9 +76,9 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
-						"avro",
-						"json",
-						"protobuf",
+						"AVRO",
+						"JSON",
+						"PROTOBUF",
 					),
 				},
 			},

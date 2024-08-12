@@ -91,9 +91,9 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf(
-						"avro",
-						"json",
-						"protobuf",
+						"AVRO",
+						"JSON",
+						"PROTOBUF",
 					),
 				},
 			},
@@ -526,18 +526,18 @@ func ToRegistryReferences(references types.List) []srclient.Reference {
 
 func FromSchemaType(schemaType *srclient.SchemaType) string {
 	if schemaType == nil {
-		return "avro"
+		return "AVRO"
 	}
 	return string(*schemaType)
 }
 
 func ToSchemaType(schemaType string) srclient.SchemaType {
 	switch schemaType {
-	case "avro":
+	case "AVRO":
 		return srclient.Avro
-	case "json":
+	case "JSON":
 		return srclient.Json
-	case "protobuf":
+	case "PROTOBUF":
 		return srclient.Protobuf
 	default:
 		return srclient.Avro
@@ -561,7 +561,7 @@ func FromCompatibilityLevelType(compatibilityLevel srclient.CompatibilityLevel) 
 	case srclient.FullTransitive:
 		return "FULL_TRANSITIVE"
 	default:
-		return "FORWARD_TRANSITIVE"
+		return "BACKWARD"
 	}
 }
 
@@ -582,6 +582,6 @@ func ToCompatibilityLevelType(compatibilityLevel string) srclient.CompatibilityL
 	case "FULL_TRANSITIVE":
 		return srclient.FullTransitive
 	default:
-		return srclient.ForwardTransitive
+		return srclient.Backward
 	}
 }

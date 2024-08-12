@@ -15,7 +15,7 @@ Provides a Schema Registry Schema resource.
 ```hcl
 resource "schemaregistry_schema" "example" {
   subject             = "example"
-  schema_type         = "avro"
+  schema_type         = "AVRO"
   compatibility_level = "FORWARD_TRANSITIVE"
   schema              = "example"
 

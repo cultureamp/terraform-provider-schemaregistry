@@ -20,7 +20,7 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
-					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
 			},
@@ -42,7 +42,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
-					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
 			},
@@ -53,7 +53,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
-					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 				),
 			},
@@ -64,7 +64,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
-					resource.TestCheckResourceAttr(datasourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttr(datasourceName, "version", "2"),
 				),
@@ -92,7 +92,7 @@ func testAccSchemaDataSourceConfig_single(subject string) string {
 	const singleTemplate = `
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "NONE"
   schema               = jsonencode({
   "type": "record",
@@ -122,7 +122,7 @@ func testAccSchemaDataSourceConfig_update(subject string) string {
 	const updateTemplate = `
 resource "schemaregistry_schema" "test_01" {
   subject             = "%s"
-  schema_type         = "avro"
+  schema_type         = "AVRO"
   compatibility_level = "BACKWARD"
   schema              = jsonencode({
     type = "record",
@@ -156,7 +156,7 @@ func testAccSchemaDataSourceConfig_specificVersion(subject string, version int) 
 	const specificVersionTemplate = `
 resource "schemaregistry_schema" "test_01" {
   subject             = "%s"
-  schema_type         = "avro"
+  schema_type         = "AVRO"
   compatibility_level = "BACKWARD"
   schema              = jsonencode({
     type = "record",
