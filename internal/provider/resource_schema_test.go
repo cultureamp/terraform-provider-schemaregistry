@@ -51,7 +51,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 					// Verify schema attributes
 					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(initialSchema)),
-					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "version"),
@@ -71,7 +71,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 					// Verify updated schema attributes
 					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
 					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(updatedSchema)),
-					resource.TestCheckResourceAttr(resourceName, "schema_type", "avro"),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "version"),
@@ -138,7 +138,7 @@ func testAccSchemaResourceConfig_single(subject, ref01 string) string {
 	const singleTemplate = `
 resource "schemaregistry_schema" "ref_01" {
   subject              = "%s"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "NONE"
   schema               = <<EOF
 {
@@ -156,7 +156,7 @@ EOF
 
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "NONE"
   schema               = jsonencode({
   "type": "record",
@@ -185,7 +185,7 @@ func testAccSchemaResourceConfig_singleUpdate(subject, ref01 string) string {
 	const updateTemplate = `
 resource "schemaregistry_schema" "ref_01" {
   subject              = "%s"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "NONE"
   schema               = jsonencode({
     "type": "record",
@@ -201,7 +201,7 @@ resource "schemaregistry_schema" "ref_01" {
 
 resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "BACKWARD"
   schema               = jsonencode({
     "type": "record",
