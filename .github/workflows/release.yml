@@ -49,16 +49,10 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
       - name: Generate Changelog
         id: changelog
-        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
+        uses: tj-actions/git-cliff@3ee6916dce0f104be52cb8e914b08a119c75cd9e # v1.5.0
         with:
-          changelog-file: CHANGELOG.md
-          changelog-generator-opt: "emojis=true"
-          dry: true # do not create a release
-          prepend: true # prepend new changelog to the existing one
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          output: CHANGELOG.md
       - name: Create Pull Request
-        if: steps.changelog.outputs.changelog != ''
         run: |
           git config --local user.name 'github-actions[bot]'
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
