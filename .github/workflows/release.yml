@@ -52,6 +52,7 @@ jobs:
         uses: tj-actions/git-cliff@3ee6916dce0f104be52cb8e914b08a119c75cd9e # v1.5.0
         with:
           output: CHANGELOG.md
+          args: --prepend --current # https://git-cliff.org/docs/usage/args
       - name: Create Pull Request
         run: |
           git config --local user.name 'github-actions[bot]'
