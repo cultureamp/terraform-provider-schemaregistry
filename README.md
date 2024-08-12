@@ -57,6 +57,7 @@ resource "schemaregistry_schema" "example" {
   subject              = "example"
   schema_type          = "AVRO"
   compatibility_level  = "NONE"
+  hard_delete          = false
   schema               = file("path/to/your/schema.avsc")
 
   # optional list of schema references

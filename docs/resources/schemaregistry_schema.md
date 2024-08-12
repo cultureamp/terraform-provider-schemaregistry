@@ -17,6 +17,7 @@ resource "schemaregistry_schema" "example" {
   subject             = "example"
   schema_type         = "AVRO"
   compatibility_level = "FORWARD_TRANSITIVE"
+  hard_delete         = true
   schema              = "example"
 
   # optional list of schema references
@@ -37,8 +38,9 @@ The following arguments are supported:
 * `subject` - (Required) The subject related to the schema.
 * `schema_type` - (Required) The schema type.
 * `compatibility_level` - (Required) The schema compatibility level.
-* `schema` - (Required) The schema string.
+* `schema` - (Optional) The schema string.
 * `references` - (Optional) The referenced schema list.
+* `hard_delete` - (Optional) Controls whether the subject is soft or hard deleted.
 
 ## Attributes Reference
 
