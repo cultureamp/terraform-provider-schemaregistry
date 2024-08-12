@@ -23,22 +23,26 @@ If you want to build the provider from source, follow these steps:
 
 ## Testing the Provider
 
-The acceptance tests rely on [Testcontainers for Go (Redpanda)](https://golang.testcontainers.org/modules/redpanda/) to provide a Schema Registry API.
+The acceptance tests rely on [Testcontainers for Go (Redpanda)](https://golang.testcontainers.org/modules/redpanda/) to
+provide a Schema Registry API.
 
 This has some limitations:
 
-- Redpanda only supports `avro` and `protobuf` encoding, cannot test `json` schemas [[1]](https://github.com/redpanda-data/redpanda/issues/6220)
+- Redpanda only supports `AVRO` and `PROTOBUF` encoding, cannot test `JSON` schemas
+  [[1]](https://github.com/redpanda-data/redpanda/issues/6220)
 
 ## Using the Provider
 
-If you're building the provider, follow the instructions to [install it as a plugin](https://developer.hashicorp.com/terraform/cli/plugins#managing-plugin-installation). After placing it into your plugins directory, run `terraform init` to initialize it.
+If you're building the provider, follow the instructions to
+[install it as a plugin](https://developer.hashicorp.com/terraform/cli/plugins#managing-plugin-installation).
+After placing it into your plugins directory, run `terraform init` to initialize it.
 
 ```hcl
 terraform {
   required_providers {
     schemaregistry = {
       source = "cultureamp/schemaregistry"
-      version = "1.0.0"
+      version = "1.1.0"
     }
   }
 }
@@ -51,7 +55,7 @@ provider "schemaregistry" {
 
 resource "schemaregistry_schema" "example" {
   subject              = "example"
-  schema_type          = "avro"
+  schema_type          = "AVRO"
   compatibility_level  = "NONE"
   schema               = file("path/to/your/schema.avsc")
 
