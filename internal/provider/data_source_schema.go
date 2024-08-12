@@ -40,10 +40,12 @@ type schemaDataSourceModel struct {
 	Version            types.Int64          `tfsdk:"version"`
 	Reference          types.List           `tfsdk:"reference"`
 	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
+	HardDelete         types.Bool           `tfsdk:"hard_delete"`
 }
 
 // Metadata returns the data source type name.
-func (d *schemaDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *schemaDataSource) Metadata(_ context.Context, req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_schema"
 }
 
@@ -55,7 +57,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 		Description:         "Fetches a schema from the Schema Registry.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "UID for the schema, which is the subject name.",
+				Description: "The globally unique ID of the schema.",
 				Computed:    true,
 			},
 			"subject": schema.StringAttribute{
@@ -63,7 +65,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Required:    true,
 			},
 			"schema": schema.StringAttribute{
-				Description: "The schema string.",
+				Description: "The schema definition.",
 				Computed:    true,
 				CustomType:  jsontypes.NormalizedType{},
 			},
@@ -107,7 +109,7 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				},
 			},
 			"compatibility_level": schema.StringAttribute{
-				Description: "The compatibility level of the schema. Default is FORWARD_TRANSITIVE.",
+				Description: "The compatibility level of the schema.",
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -121,12 +123,17 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 					),
 				},
 			},
+			"hard_delete": schema.BoolAttribute{
+				Description: "Controls whether a schema should be soft or hard deleted.",
+				Optional:    true,
+			},
 		},
 	}
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *schemaDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *schemaDataSource) Configure(_ context.Context, req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
