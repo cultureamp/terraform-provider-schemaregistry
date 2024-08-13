@@ -59,15 +59,23 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
+          # Checkout to a new branch
           BRANCH="chore/update-changelog-${{ github.ref_name }}"
           git checkout -b $BRANCH
-          git add CHANGELOG.md
 
+          # Pull the latest changes from the remote branch and rebase
+          git pull --rebase origin $BRANCH
+
+          # Commit the changes
           set +e
+          git add CHANGELOG.md
           git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
           set -e
 
+          # Push the changes to the branch
           git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git $BRANCH
+
+          # Create a pull request
           gh pr create \
             --title "chore(release): update changelog after ${{ github.ref_name }}" \
             --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
