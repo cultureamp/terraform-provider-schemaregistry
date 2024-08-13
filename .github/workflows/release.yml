@@ -47,35 +47,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-      - name: Generate Changelog
-        id: changelog
-        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
-        with:
-          changelog-file: CHANGELOG.md
-          changelog-generator-opt: "emojis=true"
-          dry: true # do not create a release
-          prepend: true # prepend new changelog to the existing one
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Pull Request
-        if: steps.changelog.outputs.changelog != ''
-        run: |
-          git config --local user.name 'github-actions[bot]'
-          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
-
-          BRANCH="chore/update-changelog-${{ github.ref_name }}"
-          git checkout -b $BRANCH
-
-          git add CHANGELOG.md
-          git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
-          git push origin $BRANCH
-
-          gh pr create \
-            --title "chore(release): update changelog after ${{ github.ref_name }}" \
-            --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
-            --label release \
-            --assignee ${{ github.actor }} \
-            --head $BRANCH \
-            --base main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
