@@ -53,6 +53,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(initialSchema)),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
+					resource.TestCheckResourceAttr(resourceName, "hard_delete", "false"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "version"),
 				),
@@ -73,6 +74,7 @@ func TestAccSchemaResource_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "schema", NormalizedJSON(updatedSchema)),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttr(resourceName, "hard_delete", "true"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "version"),
 				),
@@ -158,6 +160,7 @@ resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "AVRO"
   compatibility_level  = "NONE"
+  hard_delete          = false
   schema               = jsonencode({
   "type": "record",
   "name": "Test",
@@ -203,6 +206,7 @@ resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "AVRO"
   compatibility_level  = "BACKWARD"
+  hard_delete          = true
   schema               = jsonencode({
     "type": "record",
     "name": "TestUpdated",

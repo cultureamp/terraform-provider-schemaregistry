@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -43,6 +44,7 @@ type schemaResourceModel struct {
 	Version            types.Int64          `tfsdk:"version"`
 	Reference          types.List           `tfsdk:"references"`
 	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
+	HardDelete         types.Bool           `tfsdk:"hard_delete"`
 }
 
 // Metadata returns the resource type name.
@@ -73,7 +75,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"schema": schema.StringAttribute{
 				Description: "The schema definition.",
-				Required:    true,
+				Optional:    true,
 				CustomType:  jsontypes.NormalizedType{},
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(2),
@@ -85,7 +87,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"schema_type": schema.StringAttribute{
 				Description: "The schema format.",
-				Optional:    true,
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -130,6 +132,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"compatibility_level": schema.StringAttribute{
 				Description: "The compatibility level of the schema.",
 				Optional:    true,
+				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"NONE",
@@ -141,6 +144,12 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						"FULL_TRANSITIVE",
 					),
 				},
+			},
+			"hard_delete": schema.BoolAttribute{
+				Description: "Controls whether a schema should be soft or hard deleted.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 		},
 	}
@@ -229,6 +238,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	plan.SchemaType = types.StringValue(schemaTypeStr)
 	plan.Version = types.Int64Value(1) // Set the version to 1 for new schema
 	plan.Reference = FromRegistryReferences(schema.References())
+	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -276,6 +286,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
 	state.Reference = FromRegistryReferences(schema.References())
+	state.HardDelete = types.BoolValue(state.HardDelete.ValueBool())
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -336,6 +347,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = FromRegistryReferences(schema.References())
+	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -354,8 +366,10 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	// Soft deletes existing schema
-	err := r.client.DeleteSubject(state.Subject.ValueString(), false)
+	deletionType := state.HardDelete.ValueBool()
+
+	// Delete existing schema
+	err := r.client.DeleteSubject(state.Subject.ValueString(), deletionType)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Schema",

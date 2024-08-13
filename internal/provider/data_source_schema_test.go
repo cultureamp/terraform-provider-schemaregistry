@@ -94,6 +94,7 @@ resource "schemaregistry_schema" "test_01" {
   subject              = "%s"
   schema_type          = "AVRO"
   compatibility_level  = "NONE"
+  hard_delete          = false
   schema               = jsonencode({
   "type": "record",
   "name": "Test",
@@ -124,6 +125,7 @@ resource "schemaregistry_schema" "test_01" {
   subject             = "%s"
   schema_type         = "AVRO"
   compatibility_level = "BACKWARD"
+  hard_delete         = false
   schema              = jsonencode({
     type = "record",
     name = "TestUpdated",
