@@ -51,7 +51,7 @@ jobs:
         uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
         id: changelog
         with:
-          args: --prepend --current # https://git-cliff.org/docs/usage/args
+          args: --prepend CHANGELOG.md --current # https://git-cliff.org/docs/usage/args
         env:
           OUTPUT: CHANGELOG.md
       - name: Create Pull Request
@@ -62,16 +62,20 @@ jobs:
           BRANCH="chore/update-changelog-${{ github.ref_name }}"
           git checkout -b $BRANCH
 
-          git add CHANGELOG.md
-          git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
-          git push origin $BRANCH
+          git add ${{ github.workspace }}/CHANGELOG.md
 
-          gh pr create \
-            --title "chore(release): update changelog after ${{ github.ref_name }}" \
-            --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
-            --label release \
-            --assignee ${{ github.actor }} \
-            --head $BRANCH \
-            --base main
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit in CHANGELOG.md"
+          else
+            git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
+            git push origin $BRANCH
+            gh pr create \
+              --title "chore(release): update changelog after ${{ github.ref_name }}" \
+              --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
+              --label release \
+              --assignee ${{ github.actor }} \
+              --head $BRANCH \
+              --base main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
