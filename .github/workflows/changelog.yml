@@ -53,10 +53,10 @@ jobs:
           git push --force-with-lease origin $BRANCH -q
 
           # Create or update PR
-          if gh pr view $BRANCH; then
+          if gh pr view $BRANCH > /dev/null 2>&1; then
             gh pr edit $BRANCH --body-file $PR_BODY
           else
-            gh pr create
+            gh pr create \
                 --title "chore(release): update changelog after $REF" \
                 --body-file $PR_BODY \
                 --label release \
