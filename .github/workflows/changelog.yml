@@ -4,8 +4,8 @@ run-name: Generate Changelog ${{ github.sha }} by @${{ github.actor }}
 on:
   workflow_dispatch:
   pull_request:
-    types:
-      - closed
+    # types:
+    #   - closed
 
 permissions:
   pull-requests: write # to be able to create pull requests
