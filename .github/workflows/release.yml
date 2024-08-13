@@ -51,7 +51,7 @@ jobs:
         uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
         id: git-cliff
         with:
-          args: -vv --latest  --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
+          args: -vv --current --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
         env:
           OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
@@ -60,41 +60,27 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
-          # Checkout to a new branch
-          BRANCH="chore/update-changelog-${{ github.ref_name }}"
+          # Define branch and PR body
+          BRANCH="chore/update-changelog"
+          PR_BODY="pr_body.txt"
+          echo ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})" > $PR_BODY
+          echo "<details><summary>Changelog Details</summary>${{ steps.git-cliff.outputs.content }}</details>" >> $PR_BODY
+
+          # Create branch, commit changes, and push
           git checkout -b $BRANCH
-
-          # Pull the latest changes from the remote branch and rebase
-          git pull --rebase origin $BRANCH
-
-          # Commit the changes
-          set +e
           git add CHANGELOG.md
-          git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
-          set -e
+          git commit -m "chore(release): update changelog after ${{ github.ref_name }}" || true
+          git rebase origin/main
+          git push --force-with-lease origin $BRANCH
 
-          # Push the changes to the branch
-          git push --force https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git $BRANCH
-
-          # Create the pull request body file
-          pr_body="pr_body.txt"
-          echo ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})" > $pr_body
-          echo "" >> $pr_body
-          echo "${{ steps.git-cliff.outputs.content }}" >> $pr_body
-
-          # Check if the PR already exists
-          if gh pr view $BRANCH --json number > /dev/null 2>&1; then
-            # Update the existing PR
-            gh pr edit $BRANCH --body-file $pr_body
-          else
-            # Create a new pull request
-            gh pr create \
+          # Create or update PR
+          gh pr view $BRANCH > /dev/null 2>&1 && gh pr edit $BRANCH --body-file $PR_BODY || \
+          gh pr create
               --title "chore(release): update changelog after ${{ github.ref_name }}" \
-              --body-file $pr_body \
+              --body-file $PR_BODY \
               --label release \
               --assignee ${{ github.actor }} \
               --head $BRANCH \
               --base main
-          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
