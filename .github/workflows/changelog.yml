@@ -8,6 +8,7 @@ on:
     #   - closed
 
 permissions:
+  contents: write # to be able to commit changes
   pull-requests: write # to be able to create pull requests
 
 jobs:
