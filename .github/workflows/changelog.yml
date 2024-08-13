@@ -53,8 +53,8 @@ jobs:
             git rebase main -q
             git push --force-with-lease origin $BRANCH -q
 
-            # Create or update PR with quiet output
-            if gh pr view $BRANCH > /dev/null 2>&1; then
+            # Create or update PR
+            if gh pr view $BRANCH; then
               gh pr edit $BRANCH --body-file $PR_BODY
             else
               gh pr create
