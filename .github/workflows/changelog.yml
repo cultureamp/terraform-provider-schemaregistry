@@ -41,7 +41,7 @@ jobs:
             # Define branch and PR body
             BRANCH="chore/update-changelog"
             PR_BODY="pr_body.txt"
-            echo ":robot: Update changelog after $REF > $PR_BODY
+            echo ":robot: Update changelog after $REF" >> $PR_BODY
             echo "<details><summary>Changelog Details</summary>" >> $PR_BODY
             echo "${{ steps.git-cliff.outputs.content }}" >> $PR_BODY
             echo "</details>" >> $PR_BODY
