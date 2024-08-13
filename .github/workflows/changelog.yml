@@ -39,7 +39,7 @@ jobs:
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
 
           # Define branch and PR body
-          BRANCH="chore/update-changelog"
+          BRANCH="chore/update-changelog-$REF"
           PR_BODY="pr_body.txt"
           echo ":robot: Update changelog after $REF" >> $PR_BODY
           echo "<details><summary>Changelog Details</summary>" >> $PR_BODY
@@ -53,17 +53,14 @@ jobs:
           git commit -m "chore(release): update changelog after $REF" -q || true
           git push --force-with-lease origin $BRANCH -q
 
-          # Create or update PR
-          if gh pr view $BRANCH > /dev/null 2>&1; then
-            gh pr edit $BRANCH --body-file $PR_BODY
-          else
-            gh pr create \
-                --title "chore(release): update changelog after $REF" \
-                --body-file $PR_BODY \
-                --label release \
-                --assignee ${{ github.actor }} \
-                --head $BRANCH \
-                --base main
+          # Create PR
+          gh pr create \
+              --title "chore(release): update changelog after $REF" \
+              --body-file $PR_BODY \
+              --label release \
+              --assignee ${{ github.actor }} \
+              --head $BRANCH \
+              --base main
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
