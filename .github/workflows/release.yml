@@ -49,33 +49,31 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
       - name: Generate Changelog
         uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
-        id: changelog
-        with: # https://git-cliff.org/docs/usage/args
-          args: -vv --latest  --prepend CHANGELOG.md --no-exec --github-repo ${{ github.repository }}
+        with:
+          args: -vv --latest  --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
         env:
           OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
       - name: Create Pull Request
         run: |
-          git config --local user.name 'github-actions[bot]'
-          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
 
           BRANCH="chore/update-changelog-${{ github.ref_name }}"
           git checkout -b $BRANCH
+          git add CHANGELOG.md
 
-          git add ${{ github.workspace }}/CHANGELOG.md
+          set +e
+          git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
+          set -e
 
-          if git diff-index --quiet HEAD --; then
-            echo "No changes to commit in CHANGELOG.md"
-          else
-            git commit -m "chore(release): update changelog after ${{ github.ref_name }}"
-            git push origin $BRANCH
-            gh pr create \
-              --title "chore(release): update changelog after ${{ github.ref_name }}" \
-              --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
-              --label release \
-              --assignee ${{ github.actor }} \
-              --head $BRANCH \
-              --base main
-          fi
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git $BRANCH
+          gh pr create \
+            --title "chore(release): update changelog after ${{ github.ref_name }}" \
+            --body ":robot: Update changelog after the release of [${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})\n\n${{ steps.changelog.outputs.changelog }}" \
+            --label release \
+            --assignee ${{ github.actor }} \
+            --head $BRANCH \
+            --base main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
