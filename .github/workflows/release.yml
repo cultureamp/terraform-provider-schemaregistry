@@ -50,8 +50,8 @@ jobs:
       - name: Generate Changelog
         uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
         id: changelog
-        with:
-          args: --prepend CHANGELOG.md --current # https://git-cliff.org/docs/usage/args
+        with: # https://git-cliff.org/docs/usage/args
+          args: -vv --latest  --prepend CHANGELOG.md --no-exec --github-repo ${{ github.repository }}
         env:
           OUTPUT: CHANGELOG.md
       - name: Create Pull Request
