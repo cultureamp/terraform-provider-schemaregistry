@@ -3,9 +3,9 @@ run-name: Generate Changelog ${{ github.sha }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
-  pull_request:
+  release:
     types:
-      - closed
+      - published
 
 permissions:
   contents: write # to be able to commit changes
@@ -23,47 +23,22 @@ jobs:
         uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
         id: git-cliff
         with:
-          args: -vv --current --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
+          args: -vv --latest --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
         env:
-          OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
+      - name: Get Release Version
+        run: echo "RELEASE_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Create Pull Request
-        run: |
-          if ${{ github.event_name == 'workflow_dispatch' }}; then
-            REF=$(git rev-parse --short HEAD)
-          else
-            REF="#${{ github.event.pull_request.number }}"
-          fi
+        uses: peter-evans/create-pull-request@ba864ad40c29a20a464f75f942160a3213edfbd1 # v6.1.0
+        with:
+          add-paths: CHANGELOG.md
+          commit-message: "chore(release): update changelog after ${{ env.RELEASE_TAG }}"
+          title: "chore(release): update changelog"
+          body: |
+            :robot: Update changelog after the release of [${{ env.RELEASE_TAG }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }})
+            <details><summary>Changelog Details</summary>
 
-          git config --local user.name 'github-actions[bot]'
-          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
-
-          # Define branch and PR body
-          BRANCH="chore/update-changelog"
-          PR_BODY="pr_body.txt"
-          echo ":robot: Update changelog after $REF" >> $PR_BODY
-          echo "<details><summary>Changelog Details</summary>" >> $PR_BODY
-          echo "" >>q $PR_BODY
-          echo "${{ steps.git-cliff.outputs.content }}" >> $PR_BODY
-          echo "</details>" >> $PR_BODY
-
-          # Create branch, commit changes and push
-          git checkout -b $BRANCH -q
-          git add CHANGELOG.md
-          git commit -m "chore(release): update changelog after $REF" -q || true
-          git push --force-with-lease origin $BRANCH -q
-
-          # Create or update PR
-          if gh pr view $BRANCH > /dev/null 2>&1; then
-            gh pr edit $BRANCH --body-file $PR_BODY
-          else
-            gh pr create \
-                --title "chore(release): update changelog after $REF" \
-                --body-file $PR_BODY \
-                --label release \
-                --assignee ${{ github.actor }} \
-                --head $BRANCH \
-                --base main
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ${{ steps.git-cliff.outputs.content }}
+            </details>
+          branch: "chore/update-changelog"
+          base: main
