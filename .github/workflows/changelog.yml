@@ -28,43 +28,41 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
       - name: Create Pull Request
         run: |
-          if [[ `git status --porcelain` ]]; then
-            if ${{ github.event_name == 'workflow_dispatch' }}; then
-              REF=$(git rev-parse --short HEAD)
-            else
-              REF="#${{ github.event.pull_request.number }}"
-            fi
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            REF=$(git rev-parse --short HEAD)
+          else
+            REF="#${{ github.event.pull_request.number }}"
+          fi
 
-            git config --local user.name 'github-actions[bot]'
-            git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
 
-            # Define branch and PR body
-            BRANCH="chore/update-changelog"
-            PR_BODY="pr_body.txt"
-            echo ":robot: Update changelog after $REF" >> $PR_BODY
-            echo "<details><summary>Changelog Details</summary>" >> $PR_BODY
-            echo "${{ steps.git-cliff.outputs.content }}" >> $PR_BODY
-            echo "</details>" >> $PR_BODY
+          # Define branch and PR body
+          BRANCH="chore/update-changelog"
+          PR_BODY="pr_body.txt"
+          echo ":robot: Update changelog after $REF" >> $PR_BODY
+          echo "<details><summary>Changelog Details</summary>" >> $PR_BODY
+          echo "${{ steps.git-cliff.outputs.content }}" >> $PR_BODY
+          echo "</details>" >> $PR_BODY
 
-            # Create branch, commit changes and push
-            git checkout -b $BRANCH -q
-            git add CHANGELOG.md
-            git commit -m "chore(release): update changelog after $REF" -q || true
-            git rebase main -q
-            git push --force-with-lease origin $BRANCH -q
+          # Create branch, commit changes and push
+          git checkout -b $BRANCH -q
+          git add CHANGELOG.md
+          git commit -m "chore(release): update changelog after $REF" -q || true
+          git rebase main -q
+          git push --force-with-lease origin $BRANCH -q
 
-            # Create or update PR
-            if gh pr view $BRANCH; then
-              gh pr edit $BRANCH --body-file $PR_BODY
-            else
-              gh pr create
-                  --title "chore(release): update changelog after $REF" \
-                  --body-file $PR_BODY \
-                  --label release \
-                  --assignee ${{ github.actor }} \
-                  --head $BRANCH \
-                  --base main
-            fi
+          # Create or update PR
+          if gh pr view $BRANCH; then
+            gh pr edit $BRANCH --body-file $PR_BODY
+          else
+            gh pr create
+                --title "chore(release): update changelog after $REF" \
+                --body-file $PR_BODY \
+                --label release \
+                --assignee ${{ github.actor }} \
+                --head $BRANCH \
+                --base main
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
