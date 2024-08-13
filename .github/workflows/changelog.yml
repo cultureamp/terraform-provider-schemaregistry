@@ -49,7 +49,6 @@ jobs:
           git checkout -b $BRANCH -q
           git add CHANGELOG.md
           git commit -m "chore(release): update changelog after $REF" -q || true
-          git rebase main -q
           git push --force-with-lease origin $BRANCH -q
 
           # Create or update PR
