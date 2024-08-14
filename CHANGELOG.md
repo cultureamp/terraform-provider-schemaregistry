@@ -1,8 +1,18 @@
-<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2024-08-13
+
+### 🚀 Features
+
+- Add support for optionally hard deleting schemas (#33)
+
+### 📚 Documentation
+
+- Update docs after release v1.1.0 (#31)
+
+<!-- markdownlint-disable MD024 -->
 ## [1.1.0] - 2024-08-12
 
 ### 🚜 Refactor
