@@ -207,7 +207,6 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Generate API request body from plan
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	references := ToRegistryReferences(plan.Reference)
-	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Create new schema resource
 	schema, err := r.client.CreateSchema(subject, normalizedSchema, schemaType, references...)
@@ -219,13 +218,16 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error setting compatibility level",
-			"Could not set compatibility level, unexpected error: "+err.Error(),
-		)
-		return
+	if !plan.CompatibilityLevel.IsUnknown() && !plan.CompatibilityLevel.IsNull() {
+		compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error setting compatibility level",
+				"Could not set compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
 	}
 
 	// Convert *srclient.SchemaType to string
@@ -321,7 +323,6 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	subject := plan.Subject.ValueString()
 	references := ToRegistryReferences(plan.Reference)
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
-	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Update existing schema
 	schema, err := r.client.CreateSchema(subject, normalizedSchema, schemaType, references...)
@@ -333,13 +334,16 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error setting compatibility level",
-			"Could not set compatibility level, unexpected error: "+err.Error(),
-		)
-		return
+	if !plan.CompatibilityLevel.IsUnknown() && !plan.CompatibilityLevel.IsNull() {
+		compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error setting compatibility level",
+				"Could not set compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
 	}
 
 	// Update state with refreshed values
@@ -575,7 +579,7 @@ func FromCompatibilityLevelType(compatibilityLevel srclient.CompatibilityLevel) 
 	case srclient.FullTransitive:
 		return "FULL_TRANSITIVE"
 	default:
-		return "BACKWARD"
+		return "undefined"
 	}
 }
 
@@ -596,6 +600,6 @@ func ToCompatibilityLevelType(compatibilityLevel string) srclient.CompatibilityL
 	case "FULL_TRANSITIVE":
 		return srclient.FullTransitive
 	default:
-		return srclient.Backward
+		return "undefined"
 	}
 }
