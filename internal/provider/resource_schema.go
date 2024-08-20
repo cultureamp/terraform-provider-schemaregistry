@@ -132,7 +132,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"compatibility_level": schema.StringAttribute{
 				Description: "The compatibility level of the schema.",
 				Optional:    true,
-				Computed:    true,
+				Computed:    false,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"NONE",
