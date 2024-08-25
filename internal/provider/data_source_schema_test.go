@@ -19,7 +19,7 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 				Config: testAccSchemaDataSourceConfig_single(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
+					resource.TestCheckResourceAttr(datasourceName, "schema", initialSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
@@ -41,7 +41,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(initialSchema)),
+					resource.TestCheckResourceAttr(datasourceName, "schema", initialSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
 				),
@@ -52,7 +52,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
+					resource.TestCheckResourceAttr(datasourceName, "schema", updatedSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 				),
@@ -63,7 +63,7 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", NormalizedJSON(updatedSchema)),
+					resource.TestCheckResourceAttr(datasourceName, "schema", updatedSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttr(datasourceName, "version", "2"),
