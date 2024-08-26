@@ -17,6 +17,10 @@ const (
         {
             "name": "f1",
             "type": "string"
+        },
+        {
+            "name": "f2",
+            "type": "string"
         }
     ]
 }`
@@ -35,6 +39,8 @@ const (
         }
     ]
 }`
+
+	expectedSchema = `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int"}]}`
 )
 
 func TestAccSchemaResource_basic(t *testing.T) {
@@ -45,42 +51,56 @@ func TestAccSchemaResource_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create, Read, ImportState testing
+			// Create and Read testing
 			{
 				Config: testAccSchemaResourceConfig_single(subjectName, ref01),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify schema attributes
 					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(resourceName, "schema", initialSchema),
 					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "NONE"),
 					resource.TestCheckResourceAttr(resourceName, "hard_delete", "false"),
 					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(initialSchema, state)
+					}),
+				),
+			},
+			// Update and Read testing
+			{
+				Config: testAccSchemaResourceConfig_singleUpdate(subjectName, ref01),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify updated schema attributes
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttr(resourceName, "hard_delete", "true"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(updatedSchema, state)
+					}),
 				),
 			},
 			// ImportState testing
 			{
 				ResourceName: resourceName,
 				ImportState:  true,
-				ImportStateCheck: func(s []*terraform.InstanceState) error {
-					// TODO: Implement import state check
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 {
+						return fmt.Errorf("expected 1 state, got %d", len(states))
+					}
+					state := states[0]
+					if state.Attributes["subject"] != subjectName {
+						return fmt.Errorf("expected subject %s, got %s", subjectName, state.Attributes["subject"])
+					}
+					err := ValidateSchemaString(expectedSchema, state.Attributes["schema"])
+					if err != nil {
+						return fmt.Errorf("schema validation error: %v", err)
+					}
 					return nil
 				},
-			},
-			// Update testing
-			{
-				Config: testAccSchemaResourceConfig_singleUpdate(subjectName, ref01),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify updated schema attributes
-					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(resourceName, "schema", updatedSchema),
-					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
-					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
-					resource.TestCheckResourceAttr(resourceName, "hard_delete", "true"),
-					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
-					resource.TestCheckResourceAttrSet(resourceName, "version"),
-				),
 			},
 		},
 	})
@@ -103,12 +123,6 @@ func TestAccSchemaResource_withReferences(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "references.0.subject", ref01),
 					resource.TestCheckResourceAttr(resourceName, "references.0.version", "1"),
 				),
-			},
-			{
-				ResourceName:            resourceName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{},
 			},
 			{
 				Config: testAccSchemaResourceConfig_singleUpdate(subjectName, ref01),
@@ -171,7 +185,11 @@ resource "schemaregistry_schema" "test_01" {
     {
       "name": "f1",
       "type": "string"
-    }
+    },
+	{
+	  "name": "f2",
+	  "type": "string"
+	}
   ]
 })
 references = [

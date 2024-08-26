@@ -19,9 +19,11 @@ func TestAccSchemaDataSource_basic(t *testing.T) {
 				Config: testAccSchemaDataSourceConfig_single(subjectName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", initialSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
+					resource.TestCheckResourceAttrWith(datasourceName, "schema", func(state string) error {
+						return ValidateSchemaString(initialSchema, state)
+					}),
 				),
 			},
 		},
@@ -41,9 +43,11 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", initialSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "NONE"),
+					resource.TestCheckResourceAttrWith(datasourceName, "schema", func(state string) error {
+						return ValidateSchemaString(initialSchema, state)
+					}),
 				),
 			},
 			// Update schema to a new version
@@ -52,9 +56,11 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", updatedSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttrWith(datasourceName, "schema", func(state string) error {
+						return ValidateSchemaString(updatedSchema, state)
+					}),
 				),
 			},
 			// Validate updated version of the schema
@@ -63,10 +69,12 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
 					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
-					resource.TestCheckResourceAttr(datasourceName, "schema", updatedSchema),
 					resource.TestCheckResourceAttr(datasourceName, "schema_type", "AVRO"),
 					resource.TestCheckResourceAttr(datasourceName, "compatibility_level", "BACKWARD"),
 					resource.TestCheckResourceAttr(datasourceName, "version", "2"),
+					resource.TestCheckResourceAttrWith(datasourceName, "schema", func(state string) error {
+						return ValidateSchemaString(updatedSchema, state)
+					}),
 				),
 			},
 		},
@@ -102,7 +110,11 @@ resource "schemaregistry_schema" "test_01" {
     {
       "name": "f1",
       "type": "string"
-    }
+    },
+	{
+	  "name": "f2",
+	  "type": "string"
+	}
   ]
 })
 }

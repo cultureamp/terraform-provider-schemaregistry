@@ -193,10 +193,8 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Normalize the schema string
-	schemaString := plan.Schema.ValueString()
-
 	// Generate API request body from plan
+	schemaString := plan.Schema.ValueString()
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	references := ToRegistryReferences(plan.Reference)
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
@@ -260,8 +258,6 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	schemaType := FromSchemaType(schema.SchemaType())
-
-	// Normalize the schema string
 	schemaString := state.Schema.ValueString()
 
 	// Update state with refreshed values
