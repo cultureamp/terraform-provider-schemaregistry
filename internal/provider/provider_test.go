@@ -14,7 +14,7 @@ import (
 const (
 	testAccProviderVersion = "test"
 	testAccProviderType    = "schemaregistry"
-	redpandaContainerImage = "docker.redpanda.com/redpandadata/redpanda:v23.3.3"
+	redpandaContainerImage = "docker.redpanda.com/redpandadata/redpanda:v24.1.15"
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
@@ -32,6 +32,7 @@ func TestMain(m *testing.M) {
 		redpanda.WithNewServiceAccount("superuser-1", "test"),
 		redpanda.WithSuperusers("superuser-1"),
 		redpanda.WithEnableSchemaRegistryHTTPBasicAuth(),
+		redpanda.WithBootstrapConfig("schema_registry_normalize_on_startup", true),
 	)
 	if err != nil {
 		log.Fatalf("failed to start container: %s", err)

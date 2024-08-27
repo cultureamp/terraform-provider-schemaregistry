@@ -193,24 +193,14 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Normalize the schema string
-	schemaString := plan.Schema.ValueString()
-	normalizedSchema, err := NormalizeJSON(schemaString, &resp.Diagnostics)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid JSON Schema",
-			fmt.Sprintf("Schema validation failed: %s", err),
-		)
-		return
-	}
-
 	// Generate API request body from plan
+	schemaString := plan.Schema.ValueString()
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	references := ToRegistryReferences(plan.Reference)
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Create new schema resource
-	schema, err := r.client.CreateSchema(subject, normalizedSchema, schemaType, references...)
+	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating schema",
@@ -268,20 +258,10 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	schemaType := FromSchemaType(schema.SchemaType())
-
-	// Normalize the schema string
 	schemaString := state.Schema.ValueString()
-	normalizedSchema, err := NormalizeJSON(schemaString, &resp.Diagnostics)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid JSON Schema",
-			fmt.Sprintf("Schema validation failed: %s", err),
-		)
-		return
-	}
 
 	// Update state with refreshed values
-	state.Schema = jsontypes.NewNormalizedValue(normalizedSchema)
+	state.Schema = jsontypes.NewNormalizedValue(schemaString)
 	state.SchemaID = types.Int64Value(int64(schema.ID()))
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
@@ -306,25 +286,15 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Normalize the schema string
-	schemaString := plan.Schema.ValueString()
-	normalizedSchema, err := NormalizeJSON(schemaString, &resp.Diagnostics)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid JSON Schema",
-			fmt.Sprintf("Schema validation failed: %s", err),
-		)
-		return
-	}
-
 	// Generate API request body from plan
+	schemaString := plan.Schema.ValueString()
 	subject := plan.Subject.ValueString()
 	references := ToRegistryReferences(plan.Reference)
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Update existing schema
-	schema, err := r.client.CreateSchema(subject, normalizedSchema, schemaType, references...)
+	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating schema",
@@ -343,7 +313,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
-	plan.Schema = jsontypes.NewNormalizedValue(normalizedSchema)
+	plan.Schema = jsontypes.NewNormalizedValue(schemaString)
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = FromRegistryReferences(schema.References())
@@ -409,21 +379,11 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 
 	schemaType := FromSchemaType(schema.SchemaType())
 
-	// Normalize the schema string
-	normalizedSchema, err := NormalizeJSON(schema.Schema(), &resp.Diagnostics)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid JSON Schema",
-			fmt.Sprintf("Schema validation failed: %s", err),
-		)
-		return
-	}
-
 	// Create state from retrieved schema
 	state := schemaResourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             jsontypes.NewNormalizedValue(normalizedSchema),
+		Schema:             jsontypes.NewNormalizedValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(schemaType),
 		Version:            types.Int64Value(int64(schema.Version())),

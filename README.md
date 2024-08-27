@@ -24,9 +24,7 @@ If you want to build the provider from source, follow these steps:
 ## Testing the Provider
 
 The acceptance tests rely on [Testcontainers for Go (Redpanda)](https://golang.testcontainers.org/modules/redpanda/) to
-provide a Schema Registry API.
-
-This has some limitations:
+provide a Schema Registry API. This has some limitations:
 
 - Redpanda only supports `AVRO` and `PROTOBUF` encoding, cannot test `JSON` schemas
   [[1]](https://github.com/redpanda-data/redpanda/issues/6220)
@@ -42,7 +40,7 @@ terraform {
   required_providers {
     schemaregistry = {
       source = "cultureamp/schemaregistry"
-      version = "1.1.0"
+      version = "1.2.1"
     }
   }
 }
