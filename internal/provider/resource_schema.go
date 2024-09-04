@@ -197,7 +197,6 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	schemaString := plan.Schema.ValueString()
 	schemaType := ToSchemaType(plan.SchemaType.ValueString())
 	references := ToRegistryReferences(plan.Reference)
-	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Create new schema resource
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
@@ -209,13 +208,28 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error setting compatibility level",
-			"Could not set compatibility level, unexpected error: "+err.Error(),
-		)
-		return
+	// Set compatibility level if specified
+	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
+		compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error setting compatibility level",
+				"Could not set compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
+	} else {
+		// Fetch the current compatibility level from the server
+		compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error getting compatibility level",
+				"Could not get compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
+		plan.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*compatibilityLevel))
 	}
 
 	// Convert *srclient.SchemaType to string
@@ -239,20 +253,32 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	// Get current state
 	var state schemaResourceModel
+
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	subject := state.Subject.ValueString()
+
 	// Fetch the latest schema from the registry
-	schema, err := r.client.GetLatestSchema(state.Subject.ValueString())
+	schema, err := r.client.GetLatestSchema(subject)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Schema",
 			"Could not read schema: "+err.Error(),
+		)
+		return
+	}
+
+	// Fetch the current compatibility level from the server
+	compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting compatibility level",
+			"Could not get compatibility level, unexpected error: "+err.Error(),
 		)
 		return
 	}
@@ -267,6 +293,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Version = types.Int64Value(int64(schema.Version()))
 	state.Reference = FromRegistryReferences(schema.References())
 	state.HardDelete = types.BoolValue(state.HardDelete.ValueBool())
+	state.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*compatibilityLevel))
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -303,13 +330,28 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error setting compatibility level",
-			"Could not set compatibility level, unexpected error: "+err.Error(),
-		)
-		return
+	// Set compatibility level if specified
+	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
+		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error setting compatibility level",
+				"Could not set compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
+		plan.CompatibilityLevel = types.StringValue(plan.CompatibilityLevel.ValueString())
+	} else {
+		// Fetch the global compatibility level from the server
+		cl, err := r.client.GetCompatibilityLevel(subject, true)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error getting compatibility level",
+				"Could not get compatibility level, unexpected error: "+err.Error(),
+			)
+			return
+		}
+		plan.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*cl))
 	}
 
 	// Update state with refreshed values
