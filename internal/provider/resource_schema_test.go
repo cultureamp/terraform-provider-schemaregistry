@@ -17,10 +17,6 @@ const (
         {
             "name": "f1",
             "type": "string"
-        },
-        {
-            "name": "f2",
-            "type": "string"
         }
     ]
 }`
@@ -33,14 +29,15 @@ const (
             "name": "f1",
             "type": "string"
         },
-        {
-            "name": "f2",
-            "type": "int"
-        }
+		{
+			"name": "f2",
+			"type": "int",
+			"default": 0
+		}
     ]
 }`
 
-	expectedSchema = `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int"}]}`
+	expectedSchema = `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int","default":0}]}`
 )
 
 func TestAccSchemaResource_basic(t *testing.T) {
@@ -129,7 +126,7 @@ func TestAccSchemaResource_withReferences(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify updated references attributes
 					resource.TestCheckResourceAttr(resourceName, "references.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "references.0.name", "TestRefUpdated"),
+					resource.TestCheckResourceAttr(resourceName, "references.0.name", "TestRef01"),
 					resource.TestCheckResourceAttr(resourceName, "references.0.subject", ref01),
 					resource.TestCheckResourceAttr(resourceName, "references.0.version", "2"),
 				),
@@ -158,11 +155,10 @@ func testAccSchemaResourceConfig_single(subject, ref01 string) string {
 resource "schemaregistry_schema" "ref_01" {
   subject              = "%s"
   schema_type          = "AVRO"
-  compatibility_level  = "NONE"
   schema               = <<EOF
 {
   "type": "record",
-  "name": "Test",
+  "name": "TestRef01",
   "fields": [
     {
       "name": "f1",
@@ -185,11 +181,7 @@ resource "schemaregistry_schema" "test_01" {
     {
       "name": "f1",
       "type": "string"
-    },
-	{
-	  "name": "f2",
-	  "type": "string"
-	}
+    }
   ]
 })
 references = [
@@ -210,14 +202,18 @@ func testAccSchemaResourceConfig_singleUpdate(subject, ref01 string) string {
 resource "schemaregistry_schema" "ref_01" {
   subject              = "%s"
   schema_type          = "AVRO"
-  compatibility_level  = "NONE"
   schema               = jsonencode({
     "type": "record",
-    "name": "TestRefUpdated",
+    "name": "TestRef01",
     "fields": [
       {
         "name": "f1",
         "type": "string"
+      },
+      {
+        "name": "f2",
+        "type": "int"
+		"default": 0
       }
     ]
   })
@@ -238,13 +234,14 @@ resource "schemaregistry_schema" "test_01" {
       },
       {
         "name": "f2",
-        "type": "int"
-      }
+        "type": "int",
+		"default": 0
+      },
     ]
   })
   references = [
     {
-      name    = "TestRefUpdated"
+      name    = "TestRef01"
       subject = schemaregistry_schema.ref_01.subject
       version = 2
     }
