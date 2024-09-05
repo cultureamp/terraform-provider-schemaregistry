@@ -110,11 +110,7 @@ resource "schemaregistry_schema" "test_01" {
     {
       "name": "f1",
       "type": "string"
-    },
-	{
-	  "name": "f2",
-	  "type": "string"
-	}
+    }
   ]
 })
 }
@@ -149,6 +145,7 @@ resource "schemaregistry_schema" "test_01" {
       {
         name = "f2",
         type = "int"
+		default = 0
       }
     ]
   })
@@ -183,6 +180,7 @@ resource "schemaregistry_schema" "test_01" {
       {
         name = "f2",
         type = "int"
+		default = 0
       }
     ]
   })
