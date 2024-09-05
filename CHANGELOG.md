@@ -1,6 +1,25 @@
+<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [1.2.2] - 2024-09-05
+
+### 🐛 Bug Fixes
+
+- Handle undefined subject compatibility levels (#45)
+
+## [1.2.1] - 2024-08-27
+
+### 🐛 Bug Fixes
+
+- Resolve schema normalization (#43)
+
+### ⚙️ Miscellaneous Tasks
+
+- Use `git-cliff` for changelog generation (#34)
+- Refactor changelog workflow (#38)
+- *(release)* Update changelog (#40)
 
 ## [1.2.0] - 2024-08-13
 
@@ -12,7 +31,6 @@ All notable changes to this project will be documented in this file.
 
 - Update docs after release v1.1.0 (#31)
 
-<!-- markdownlint-disable MD024 -->
 ## [1.1.0] - 2024-08-12
 
 ### 🚜 Refactor

@@ -3,7 +3,9 @@ run-name: Generate Changelog ${{ github.sha }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
-  release:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
 
 permissions:
   contents: write # to be able to commit changes
