@@ -1,8 +1,14 @@
-<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2024-09-05
+
+### 🐛 Bug Fixes
+
+- Handle undefined subject compatibility levels (#45)
+
+<!-- markdownlint-disable MD024 -->
 ## [1.2.2] - 2024-09-05
 
 ### 🐛 Bug Fixes
