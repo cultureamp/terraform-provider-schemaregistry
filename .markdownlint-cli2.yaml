@@ -1,0 +1,3 @@
+# Disable some built-in rules
+config:
+  no-duplicate-heading: false # MD024
