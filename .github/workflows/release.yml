@@ -11,8 +11,6 @@ on:
       - main
     paths:
       - "**/**.go"
-      - "go.mod"
-      - "go.sum"
       - ".github/workflows/release.yml"
       - ".goreleaser.yml"
 
