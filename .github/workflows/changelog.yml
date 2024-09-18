@@ -6,15 +6,15 @@ on:
   workflow_run:
     workflows: [Release]
     types: [completed]
-
-permissions:
-  contents: write # to be able to commit changes
-  pull-requests: write # to be able to create pull requests
+    branches: [main]
 
 jobs:
   changelog:
     name: Generate Changelog
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # to be able to commit changes
+      pull-requests: write # to be able to create pull requests
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:

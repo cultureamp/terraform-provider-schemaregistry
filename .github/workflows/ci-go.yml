@@ -3,6 +3,7 @@ name: Tests
 run-name: Provider Tests ${{ github.sha }} by @${{ github.actor }}
 
 on:
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:

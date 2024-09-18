@@ -2,12 +2,9 @@ name: Validate PR Title
 run-name: Validate PR Title ${{ github.sha }} by @${{ github.actor }}
 
 on:
+  merge_group:
   pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
-      - reopened
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   pull-requests: read
