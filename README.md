@@ -5,6 +5,15 @@
 
 # Terraform Provider for Schema Registry
 
+ <p align="center">
+    <a href="https://goreportcard.com/report/github.com/cultureamp/terraform-provider-schemaregistry">
+      <img src="https://goreportcard.com/badge/github.com/cultureamp/terraform-provider-schemaregistry" alt="Go report badge">
+    </a>
+    <a href="https://github.com/cultureamp/terraform-provider-schemaregistry/releases/latest">
+      <img src="https://img.shields.io/github/release/cultureamp/terraform-provider-schemaregistry.svg" alt="Release badge">
+    </a>
+</p>
+
 This provider is built using the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework).
 
 ## Requirements
@@ -40,7 +49,7 @@ terraform {
   required_providers {
     schemaregistry = {
       source = "cultureamp/schemaregistry"
-      version = "1.2.1"
+      version = "1.2.2"
     }
   }
 }
