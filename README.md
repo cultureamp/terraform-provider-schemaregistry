@@ -12,6 +12,9 @@
     <a href="https://github.com/cultureamp/terraform-provider-schemaregistry/releases/latest">
       <img src="https://img.shields.io/github/release/cultureamp/terraform-provider-schemaregistry.svg" alt="Release badge">
     </a>
+    <a href="https://securityscorecards.dev/viewer/?uri=github.com/cultureamp/terraform-provider-schemaregistry">
+      <img src="https://api.securityscorecards.dev/projects/github.com/cultureamp/terraform-provider-schemaregistry/badge" alt="OpenSSF Scorecard">
+    </a>
 </p>
 
 This provider is built using the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework).
