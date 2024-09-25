@@ -5,10 +5,3 @@ updates:
     schedule:
       interval: "weekly"
       time: "22:00" # 10pm UTC
-    groups:
-      all-minor-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-          - "minor"
