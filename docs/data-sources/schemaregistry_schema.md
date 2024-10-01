@@ -24,7 +24,7 @@ data "schemaregistry_schema" "example" {
 The following arguments are supported:
 
 * `subject` - (Required) The subject related to the schema.
-* `version` - (Optional) The schema version to fetch.
+* `version` - (Optional) The schema version to fetch. Defaults to `latest`.
 
 ## Attributes Reference
 

@@ -35,12 +35,14 @@ resource "schemaregistry_schema" "example" {
 
 The following arguments are supported:
 
-* `subject` - (Required) The subject related to the schema.
-* `schema_type` - (Required) The schema type.
-* `compatibility_level` - (Required) The schema compatibility level.
+* `subject` - (Required) The name of the subject under which the schema will be registered.
+* `schema_type` - (Required) The schema format. Accepted values are: `AVRO`, `PROTOBUF` and `JSON`.
+* `compatibility_level` - (Required) The schema compatibility level. Accepted values are `BACKWARD`,
+`BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE` and `NONE`.
 * `schema` - (Optional) The schema string.
 * `references` - (Optional) The referenced schema list.
-* `hard_delete` - (Optional) Controls whether the subject is soft or hard deleted.
+* `hard_delete` - (Optional) Controls whether the subject is soft or hard deleted. Must not be set when importing.
+Defaults to `false` (soft delete).
 
 ## Attributes Reference
 
