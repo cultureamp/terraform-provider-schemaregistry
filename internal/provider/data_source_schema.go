@@ -207,7 +207,6 @@ func (d *schemaDataSource) fetchCompatibilityLevel(subject string) (*srclient.Co
 // mapSchemaToOutputs maps the schema and compatibility level to the schema data source model.
 func (d *schemaDataSource) mapSchemaToOutputs(subject string, schema *srclient.Schema,
 	compatibilityLevel *srclient.CompatibilityLevel) schemaDataSourceModel {
-
 	return schemaDataSourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
