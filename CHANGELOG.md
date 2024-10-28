@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - Handle undefined subject compatibility levels (#45)
 
+## [1.2.2] - 2024-09-05
+
+### 🐛 Bug Fixes
+
+- Handle undefined subject compatibility levels (#45)
+
 ## [1.2.1] - 2024-08-27
 
 ### 🐛 Bug Fixes
