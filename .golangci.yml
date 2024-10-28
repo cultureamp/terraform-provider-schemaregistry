@@ -12,34 +12,34 @@ issues:
 linters:
   disable-all: true
   enable:
-    - cyclop          # Checks if the cyclic complexity of a function is acceptable
-    - dogsled         # Checks assignments with too many blank identifiers (e.g. x, , , _, := f())
+    - cyclop # Checks if the cyclic complexity of a function is acceptable
+    - dogsled # Checks assignments with too many blank identifiers (e.g. x, , , _, := f())
     - durationcheck
-    - dupl            # Detects code duplication
+    - dupl # Detects code duplication
     - errcheck
-    - exportloopref
-    - forcetypeassert 
-    - funlen          # Detects long functions
-    - gocritic        # Provides diagnostics that check for bugs, performance and style issues
+    - copyloopvar # Ensures loop variables are not reassigned on each iteration
+    - forcetypeassert
+    - funlen # Detects long functions
+    - gocritic # Provides diagnostics that check for bugs, performance and style issues
     - godot
-    - gofmt           # Checks whether code was gofmt-ed
-    - gosec           # Inspects source code for security problems
+    - gofmt # Checks whether code was gofmt-ed
+    - gosec # Inspects source code for security problems
     - gosimple
     - govet
     - ineffassign
     - makezero
-    - misspell        # Finds commonly misspelled English words in comments
-    - nestif          # Reports deeply nested if statements
-    - nilerr          # Finds the code that returns nil even if it checks that the error is not nil
+    - misspell # Finds commonly misspelled English words in comments
+    - nestif # Reports deeply nested if statements
+    - nilerr # Finds the code that returns nil even if it checks that the error is not nil
     - predeclared
     - staticcheck
     - tenv
-    - unconvert       # Remove unnecessary type conversions
-    - unparam         # Reports unused function parameters
+    - unconvert # Remove unnecessary type conversions
+    - unparam # Reports unused function parameters
     - unused
-    - whitespace      # Detects leading and trailing whitespace
+    - whitespace # Detects leading and trailing whitespace
 
 linters-settings:
   funlen:
     lines: 100
-    statements: 50    
+    statements: 50

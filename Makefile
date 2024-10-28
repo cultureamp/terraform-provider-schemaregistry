@@ -34,6 +34,12 @@ build: ## Build the provider for the current architecture
 testacc: ## Run acceptance tests
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
 
+.PHONY: lint
+lint: ## Run golangci-lint, go fmt and go vet
+	golangci-lint run && \
+	go vet ./... && \
+	go fmt ./... && \
+
 .PHONY: tidy
 tidy: ## Run go mod tidy
 	go mod tidy
@@ -58,6 +64,10 @@ fmt: ## Run go fmt
 .PHONY: docs
 docs: ## Generate provider documentation for the Terraform registry
 	tfplugindocs
+
+.PHONY: coverage
+coverage: ## Generate test coverage report
+	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
 
 # Add double hash '##' plus the help text you would like to display for "make help" against that command
 help: ### Show help for documented commands

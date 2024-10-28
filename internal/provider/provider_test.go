@@ -52,11 +52,9 @@ func TestMain(m *testing.M) {
 	tests := m.Run()
 
 	// Clean up the container
-	defer func() {
-		if err := redpandaContainer.Terminate(ctx); err != nil {
-			log.Fatalf("failed to terminate container: %s", err)
-		}
-	}()
+	if err := redpandaContainer.Terminate(ctx); err != nil {
+		log.Fatalf("failed to terminate container: %s", err)
+	}
 
 	os.Exit(tests)
 }
