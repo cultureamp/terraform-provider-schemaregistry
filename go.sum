@@ -246,8 +246,8 @@ github.com/posener/complete v1.2.3 h1:NP0eAhjcjImqslEwo/1hq7gpajME0fTLTezBKDqfXq
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c h1:ncq/mPwQF4JjgDlrVEn3C11VoGHZN7m8qihwgMEtzYw=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
-github.com/riferrei/srclient v0.7.0 h1:URGwauJydBupmOCD+No1br3sUQ5ulxfOXV0PbzG7GLc=
-github.com/riferrei/srclient v0.7.0/go.mod h1:FYOnJIV5hMh919Pb36/xybXbk8riXsO6UcDuZkGo2ak=
+github.com/riferrei/srclient v0.7.1 h1:v/5Hpscu7daZ7AZ9uRQ+Mdpca7F4m45uC8h0DCPis0Q=
+github.com/riferrei/srclient v0.7.1/go.mod h1:FYOnJIV5hMh919Pb36/xybXbk8riXsO6UcDuZkGo2ak=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
