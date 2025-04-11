@@ -1,7 +1,7 @@
 module github.com/cultureamp/terraform-provider-schemaregistry
 
 go 1.22.0
-toolchain go1.22.9
+toolchain go1.24.1
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.21.0
@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.26.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.11.0
-	github.com/riferrei/srclient v0.7.1
+	github.com/riferrei/srclient v0.7.2
 	github.com/testcontainers/testcontainers-go/modules/redpanda v0.35.0
 
 )
@@ -49,7 +49,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/cli v1.1.7 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
-	github.com/linkedin/goavro/v2 v2.12.0 // indirect
+	github.com/linkedin/goavro/v2 v2.13.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
