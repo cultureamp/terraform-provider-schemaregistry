@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cultureamp/terraform-provider-schemaregistry/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -212,9 +213,9 @@ func (d *schemaDataSource) mapSchemaToOutputs(subject string, schema *srclient.S
 		Subject:            types.StringValue(subject),
 		Schema:             jsontypes.NewNormalizedValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
-		SchemaType:         types.StringValue(FromSchemaType(schema.SchemaType())),
+		SchemaType:         types.StringValue(utils.FromSchemaType(schema.SchemaType())),
 		Version:            types.Int64Value(int64(schema.Version())),
-		Reference:          FromRegistryReferences(schema.References()),
-		CompatibilityLevel: types.StringValue(FromCompatibilityLevelType(*compatibilityLevel)),
+		Reference:          utils.FromRegistryReferences(schema.References()),
+		CompatibilityLevel: types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel)),
 	}
 }
