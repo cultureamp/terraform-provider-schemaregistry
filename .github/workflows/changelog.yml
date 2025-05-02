@@ -1,4 +1,5 @@
-name: Generate Changelog
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+---
 run-name: Generate Changelog ${{ github.sha }} by @${{ github.actor }}
 
 on:
