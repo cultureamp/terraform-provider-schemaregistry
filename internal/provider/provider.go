@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"net/http"
+	"net/http/cookiejar"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -44,6 +47,7 @@ type ProviderModel struct {
 
 const (
 	schemaRegistryURLPattern = `^https?://.*$`
+	defaultTimeout           = 5 * time.Second
 )
 
 var schemaRegistryURLRegex = regexp.MustCompile(schemaRegistryURLPattern)
@@ -110,7 +114,19 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
-	client := srclient.CreateSchemaRegistryClient(url)
+	// Build HTTP client with cookie jar for LB sticky sessions
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to create client", err.Error())
+		return
+	}
+	httpClient := &http.Client{
+		Timeout: defaultTimeout,
+		Jar:     jar,
+	}
+
+	// Create Schema Registry client with custom HTTP client
+	client := srclient.NewSchemaRegistryClient(url, srclient.WithClient(httpClient))
 
 	if username != "" && password != "" {
 		client.SetCredentials(username, password)
