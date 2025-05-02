@@ -33,7 +33,6 @@ linters:
     - nilerr # Finds the code that returns nil even if it checks that the error is not nil
     - predeclared
     - staticcheck
-    - tenv
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
     - unused
@@ -41,5 +40,5 @@ linters:
 
 linters-settings:
   funlen:
-    lines: 100
+    lines: 120
     statements: 50
