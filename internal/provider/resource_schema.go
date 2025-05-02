@@ -3,10 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 
+	"github.com/cultureamp/terraform-provider-schemaregistry/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -69,6 +70,13 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"subject": schema.StringAttribute{
 				Description: "The subject related to the schema.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+					stringvalidator.LengthAtMost(249),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[A-Za-z0-9._-]+$`),
+						"May only contain letters, digits, dots ('.'), underscores ('_') or hyphens ('-')",
+					)},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -184,7 +192,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Check if the subject is already managed in schema registry
 	subject := plan.Subject.ValueString()
-	err := r.isSubjectManaged(subject)
+	err := utils.IsSubjectManaged(r.client, subject)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating schema",
@@ -195,8 +203,8 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
-	schemaType := ToSchemaType(plan.SchemaType.ValueString())
-	references := ToRegistryReferences(plan.Reference)
+	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
+	references := utils.ToRegistryReferences(plan.Reference)
 
 	// Create new schema resource
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
@@ -210,7 +218,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Set compatibility level if specified
 	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
-		compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+		compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -229,11 +237,11 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 			)
 			return
 		}
-		plan.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*compatibilityLevel))
+		plan.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
 	}
 
 	// Convert *srclient.SchemaType to string
-	schemaTypeStr := FromSchemaType(schema.SchemaType())
+	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
 
 	// Map response body to schema
 	plan.ID = plan.Subject
@@ -241,7 +249,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.SchemaType = types.StringValue(schemaTypeStr)
 	plan.Version = types.Int64Value(1) // Set the version to 1 for new schema
-	plan.Reference = FromRegistryReferences(schema.References())
+	plan.Reference = utils.FromRegistryReferences(schema.References())
 	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	// Set state to fully populated data
@@ -283,17 +291,16 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	schemaType := FromSchemaType(schema.SchemaType())
-	schemaString := state.Schema.ValueString()
+	schemaType := utils.FromSchemaType(schema.SchemaType())
 
 	// Update state with refreshed values
-	state.Schema = jsontypes.NewNormalizedValue(schemaString)
+	state.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	state.SchemaID = types.Int64Value(int64(schema.ID()))
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
-	state.Reference = FromRegistryReferences(schema.References())
+	state.Reference = utils.FromRegistryReferences(schema.References())
 	state.HardDelete = types.BoolValue(state.HardDelete.ValueBool())
-	state.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*compatibilityLevel))
+	state.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -316,9 +323,9 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
 	subject := plan.Subject.ValueString()
-	references := ToRegistryReferences(plan.Reference)
-	schemaType := ToSchemaType(plan.SchemaType.ValueString())
-	compatibilityLevel := ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+	references := utils.ToRegistryReferences(plan.Reference)
+	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
+	compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 
 	// Update existing schema
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
@@ -351,14 +358,14 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 			)
 			return
 		}
-		plan.CompatibilityLevel = types.StringValue(FromCompatibilityLevelType(*cl))
+		plan.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*cl))
 	}
 
 	// Update state with refreshed values
 	plan.Schema = jsontypes.NewNormalizedValue(schemaString)
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
-	plan.Reference = FromRegistryReferences(schema.References())
+	plan.Reference = utils.FromRegistryReferences(schema.References())
 	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	diags = resp.State.Set(ctx, plan)
@@ -419,7 +426,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		return
 	}
 
-	schemaType := FromSchemaType(schema.SchemaType())
+	schemaType := utils.FromSchemaType(schema.SchemaType())
 
 	// Create state from retrieved schema
 	state := schemaResourceModel{
@@ -429,8 +436,8 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(schemaType),
 		Version:            types.Int64Value(int64(schema.Version())),
-		Reference:          FromRegistryReferences(schema.References()),
-		CompatibilityLevel: types.StringValue(FromCompatibilityLevelType(*compatibilityLevel)),
+		Reference:          utils.FromRegistryReferences(schema.References()),
+		CompatibilityLevel: types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel)),
 	}
 
 	// Set the state
@@ -438,166 +445,5 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-}
-
-// isSubjectManaged prevents multiple Terraform resources from managing the same subject.
-func (r *schemaResource) isSubjectManaged(subject string) error {
-	// Fetch the list of subjects from the schema registry
-	subjects, err := r.client.GetSubjects()
-	if err != nil {
-		return fmt.Errorf(
-			"Failed to get subjects from schema registry: %w",
-			err,
-		)
-	}
-
-	// Check if the given subject is already managed in the schema registry
-	for _, existingSubject := range subjects {
-		if existingSubject == subject {
-			return fmt.Errorf(
-				"Subject %s already exists in the schema registry."+
-					"Please import this resource into Terraform using `terraform import`.",
-				subject,
-			)
-		}
-	}
-
-	return nil
-}
-
-func FromRegistryReferences(references []srclient.Reference) types.List {
-	referenceType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"name":    types.StringType,
-			"subject": types.StringType,
-			"version": types.Int64Type,
-		},
-	}
-
-	if len(references) == 0 {
-		return types.ListNull(referenceType)
-	}
-
-	var elems []attr.Value
-	for _, reference := range references {
-		objectValue, diags := types.ObjectValue(
-			referenceType.AttrTypes,
-			map[string]attr.Value{
-				"name":    types.StringValue(reference.Name),
-				"subject": types.StringValue(reference.Subject),
-				"version": types.Int64Value(int64(reference.Version)),
-			},
-		)
-		if diags.HasError() {
-			fmt.Printf("Error converting reference to object value: %v\n", diags)
-			continue
-		}
-		elems = append(elems, objectValue)
-	}
-
-	listValue, diags := types.ListValue(referenceType, elems)
-	if diags.HasError() {
-		return types.ListNull(referenceType)
-	}
-
-	return listValue
-}
-
-func ToRegistryReferences(references types.List) []srclient.Reference {
-	if references.IsNull() || references.IsUnknown() {
-		return nil
-	}
-
-	var refs []srclient.Reference
-	for _, reference := range references.Elements() {
-		if !reference.IsNull() && !reference.IsUnknown() {
-			ref, ok := reference.(types.Object)
-			if !ok {
-				fmt.Printf("Invalid reference object type: %v\n", reference)
-				continue
-			}
-
-			attributes := ref.Attributes()
-			nameAttr, nameOk := attributes["name"].(types.String)
-			subjectAttr, subjectOk := attributes["subject"].(types.String)
-			versionAttr, versionOk := attributes["version"].(types.Int64)
-
-			if !nameOk || !subjectOk || !versionOk {
-				// Log error and skip this reference
-				fmt.Printf("Error extracting attributes from reference object: %v\n", attributes)
-				continue
-			}
-
-			refs = append(refs, srclient.Reference{
-				Name:    nameAttr.ValueString(),
-				Subject: subjectAttr.ValueString(),
-				Version: int(versionAttr.ValueInt64()),
-			})
-		}
-	}
-
-	return refs
-}
-
-func FromSchemaType(schemaType *srclient.SchemaType) string {
-	if schemaType == nil {
-		return "AVRO"
-	}
-	return string(*schemaType)
-}
-
-func ToSchemaType(schemaType string) srclient.SchemaType {
-	switch schemaType {
-	case "AVRO":
-		return srclient.Avro
-	case "JSON":
-		return srclient.Json
-	case "PROTOBUF":
-		return srclient.Protobuf
-	default:
-		return srclient.Avro
-	}
-}
-
-func FromCompatibilityLevelType(compatibilityLevel srclient.CompatibilityLevel) string {
-	switch compatibilityLevel {
-	case srclient.None:
-		return "NONE"
-	case srclient.Backward:
-		return "BACKWARD"
-	case srclient.BackwardTransitive:
-		return "BACKWARD_TRANSITIVE"
-	case srclient.Forward:
-		return "FORWARD"
-	case srclient.ForwardTransitive:
-		return "FORWARD_TRANSITIVE"
-	case srclient.Full:
-		return "FULL"
-	case srclient.FullTransitive:
-		return "FULL_TRANSITIVE"
-	default:
-		return "BACKWARD"
-	}
-}
-
-func ToCompatibilityLevelType(compatibilityLevel string) srclient.CompatibilityLevel {
-	switch compatibilityLevel {
-	case "NONE":
-		return srclient.None
-	case "BACKWARD":
-		return srclient.Backward
-	case "BACKWARD_TRANSITIVE":
-		return srclient.BackwardTransitive
-	case "FORWARD":
-		return srclient.Forward
-	case "FORWARD_TRANSITIVE":
-		return srclient.ForwardTransitive
-	case "FULL":
-		return srclient.Full
-	case "FULL_TRANSITIVE":
-		return srclient.FullTransitive
-	default:
-		return srclient.Backward
 	}
 }
