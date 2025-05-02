@@ -1,6 +1,9 @@
 name: Markdown Lint
 run-name: Markdown Lint ${{ github.sha }} by @${{ github.actor }}
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
