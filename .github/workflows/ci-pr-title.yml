@@ -1,6 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 ---
-# see: https://github.com/cultureamp/terraform-provider-schemaregistry/blob/main/.github/workflows/ci-pr-title.yml
 # see: https://www.conventionalcommits.org
 name: Semantic PR Title
 run-name: Semantic PR Title ${{ github.sha }} by @${{ github.actor }}
@@ -18,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/amannn/action-semantic-pull-request
-      - uses: amannn/action-semantic-pull-request@v5
+      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3 - https://github.com/amannn/action-semantic-pull-request/releases/tag/v5.5.3
         id: lint_pr_title
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: marocchino/sticky-pull-request-comment@v2
+      - uses: marocchino/sticky-pull-request-comment@67d0dec7b07ed060a405f9b2a64b8ab319fdd7db # v2.9.2 - https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.2
         # When the previous steps fails, the workflow would stop. By adding this
         # condition you can continue the execution with the populated error message.
         if: always() && (steps.lint_pr_title.outputs.error_message != null)
@@ -42,7 +41,7 @@ jobs:
 
       # Delete a previous comment when the issue has been resolved
       - if: ${{ steps.lint_pr_title.outputs.error_message == null }}
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@67d0dec7b07ed060a405f9b2a64b8ab319fdd7db # v2.9.2 - https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.2
         with:
           header: pr-title-lint-error
           delete: true
