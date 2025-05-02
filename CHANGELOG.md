@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-05-02
+
+### 🚀 Features
+
+- Use a custom client for cookie awareness (#89)
+
+### 📚 Documentation
+
+- Add openssf badge (#54)
+- Update attribute references (#60)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog workflow triggers (#47)
+- Implement additional workflow checks (#50)
+- Update golangci linters (#56)
+- Ungroup dependency updates (#57)
+- Address golangci linting issues (#63)
+- Re-enable markdownlint workflow with changed-files bump (#86)
+- Update PR title validation workflow (#87)
+
 ## [1.2.2] - 2024-09-05
 
 ### 🐛 Bug Fixes
