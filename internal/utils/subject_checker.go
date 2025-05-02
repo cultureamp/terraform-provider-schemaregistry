@@ -7,7 +7,7 @@ import (
 	"github.com/riferrei/srclient"
 )
 
-// isSubjectManaged prevents multiple Terraform resources from managing the same subject.
+// IsSubjectManaged prevents multiple Terraform resources from managing the same subject.
 func IsSubjectManaged(client *srclient.SchemaRegistryClient, subject string) error {
 	// Fetch the subject-specific versions from the schema registry:
 	//   GET /subjects/{subject}/versions
