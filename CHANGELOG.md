@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2025-05-21
+
+### 🐛 Bug Fixes
+
+- Update schema definition on read (#85)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#88)
+
 ## [1.3.0] - 2025-05-02
 
 ### 🚀 Features
