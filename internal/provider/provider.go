@@ -130,9 +130,11 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	// Set retry delays for GetSchema calls
 	client.SetRetryDelays([]time.Duration{
+		50 * time.Millisecond,
 		100 * time.Millisecond,
 		200 * time.Millisecond,
 		400 * time.Millisecond,
+		800 * time.Millisecond,
 	})
 
 	if username != "" && password != "" {
