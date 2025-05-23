@@ -128,6 +128,15 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	// Create Schema Registry client with custom HTTP client
 	client := srclient.NewSchemaRegistryClient(url, srclient.WithClient(httpClient))
 
+	// Set retry delays for GetSchema calls
+	client.SetRetryDelays([]time.Duration{
+		50 * time.Millisecond,
+		100 * time.Millisecond,
+		200 * time.Millisecond,
+		400 * time.Millisecond,
+		800 * time.Millisecond,
+	})
+
 	if username != "" && password != "" {
 		client.SetCredentials(username, password)
 	} else if username != "" || password != "" {
