@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-05-23
+
+### 🚀 Features
+
+- *(schema)* Add retry backoff to `CreateSchema` (#95)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#94)
+
 ## [1.3.1] - 2025-05-21
 
 ### 🐛 Bug Fixes
