@@ -47,7 +47,7 @@ type ProviderModel struct {
 
 const (
 	schemaRegistryURLPattern = `^https?://.*$`
-	defaultTimeout           = 5 * time.Second
+	defaultTimeout           = 30 * time.Second
 )
 
 var schemaRegistryURLRegex = regexp.MustCompile(schemaRegistryURLPattern)

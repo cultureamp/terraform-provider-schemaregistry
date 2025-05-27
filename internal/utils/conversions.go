@@ -1,12 +1,20 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/riferrei/srclient"
 )
+
+type refItem struct {
+	Name    string `tfsdk:"name"`
+	Subject string `tfsdk:"subject"`
+	Version int64  `tfsdk:"version"`
+}
 
 func FromRegistryReferences(references []srclient.Reference) types.List {
 	referenceType := types.ObjectType{
@@ -38,48 +46,37 @@ func FromRegistryReferences(references []srclient.Reference) types.List {
 		elems = append(elems, objectValue)
 	}
 
-	listValue, diags := types.ListValue(referenceType, elems)
+	refs, diags := types.ListValue(referenceType, elems)
 	if diags.HasError() {
 		return types.ListNull(referenceType)
 	}
 
-	return listValue
+	return refs
 }
 
-func ToRegistryReferences(references types.List) []srclient.Reference {
-	if references.IsNull() || references.IsUnknown() {
-		return nil
+// ToRegistryReferences turns a Terraform list of {name,subject,version} into SRclient refs.
+func ToRegistryReferences(ctx context.Context, in types.List) ([]srclient.Reference, diag.Diagnostics) {
+	if in.IsNull() || in.IsUnknown() {
+		return nil, nil
 	}
 
-	var refs []srclient.Reference
-	for _, reference := range references.Elements() {
-		if !reference.IsNull() && !reference.IsUnknown() {
-			ref, ok := reference.(types.Object)
-			if !ok {
-				fmt.Printf("Invalid reference object type: %v\n", reference)
-				continue
-			}
-
-			attributes := ref.Attributes()
-			nameAttr, nameOk := attributes["name"].(types.String)
-			subjectAttr, subjectOk := attributes["subject"].(types.String)
-			versionAttr, versionOk := attributes["version"].(types.Int64)
-
-			if !nameOk || !subjectOk || !versionOk {
-				// Log error and skip this reference
-				fmt.Printf("Error extracting attributes from reference object: %v\n", attributes)
-				continue
-			}
-
-			refs = append(refs, srclient.Reference{
-				Name:    nameAttr.ValueString(),
-				Subject: subjectAttr.ValueString(),
-				Version: int(versionAttr.ValueInt64()),
-			})
-		}
+	var items []refItem
+	diags := in.ElementsAs(ctx, &items, false)
+	if diags.HasError() {
+		return nil, diags
 	}
 
-	return refs
+	refs := make([]srclient.Reference, 0, len(items))
+	for _, it := range items {
+		vers := int(it.Version)
+
+		refs = append(refs, srclient.Reference{
+			Name:    it.Name,
+			Subject: it.Subject,
+			Version: vers,
+		})
+	}
+	return refs, diags
 }
 
 func FromSchemaType(schemaType *srclient.SchemaType) string {

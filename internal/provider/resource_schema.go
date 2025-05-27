@@ -11,10 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/riferrei/srclient"
 )
 
@@ -83,7 +85,7 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"schema": schema.StringAttribute{
 				Description: "The schema definition.",
-				Optional:    true,
+				Required:    true,
 				CustomType:  jsontypes.NormalizedType{},
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(2),
@@ -114,6 +116,9 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"references": schema.ListNestedAttribute{
 				Description: "The referenced schema list.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -141,6 +146,9 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Description: "The compatibility level of the schema.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"NONE",
@@ -204,7 +212,11 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
-	references := utils.ToRegistryReferences(plan.Reference)
+	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Create new schema resource
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
@@ -244,13 +256,12 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
 
 	// Map response body to schema
-	plan.ID = plan.Subject
+	plan.ID = types.StringValue(subject)
 	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.SchemaType = types.StringValue(schemaTypeStr)
-	plan.Version = types.Int64Value(1) // Set the version to 1 for new schema
+	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = utils.FromRegistryReferences(schema.References())
-	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
@@ -323,9 +334,13 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
 	subject := plan.Subject.ValueString()
-	references := utils.ToRegistryReferences(plan.Reference)
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
 	compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Update existing schema
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
@@ -362,11 +377,11 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
-	plan.Schema = jsontypes.NewNormalizedValue(schemaString)
+	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
+	plan.SchemaType = types.StringValue(utils.FromSchemaType(schema.SchemaType()))
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = utils.FromRegistryReferences(schema.References())
-	plan.HardDelete = types.BoolValue(plan.HardDelete.ValueBool())
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -385,10 +400,10 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	deletionType := state.HardDelete.ValueBool()
+	hardDelete := state.HardDelete.ValueBool()
 
 	// Delete existing schema
-	err := r.client.DeleteSubject(state.Subject.ValueString(), deletionType)
+	err := r.client.DeleteSubject(state.Subject.ValueString(), hardDelete)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Schema",
@@ -396,6 +411,11 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		)
 		return
 	}
+
+	resp.State.RemoveResource(ctx)
+
+	tflog.Info(ctx, fmt.Sprintf("Schema %s deleted (%s delete)", state.Subject.ValueString(),
+		map[bool]string{true: "hard", false: "soft"}[hardDelete]))
 }
 
 func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportStateRequest,
