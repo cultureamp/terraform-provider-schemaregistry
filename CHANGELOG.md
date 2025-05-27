@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2025-05-27
+
+### 🐛 Bug Fixes
+
+- Update version state and references logic (#99)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#96)
+
 ## [1.4.0] - 2025-05-23
 
 ### 🚀 Features
