@@ -188,7 +188,7 @@ references = [
     {
       name    = "TestRef01"
       subject = schemaregistry_schema.ref_01.subject
-      version = 1
+      version = 1 # schemaregistry_schema.ref_01.version
     },
   ]
 }
@@ -243,7 +243,7 @@ resource "schemaregistry_schema" "test_01" {
     {
       name    = "TestRef01"
       subject = schemaregistry_schema.ref_01.subject
-      version = schemaregistry_schema.ref_01.subject
+      version = 2 # schemaregistry_schema.ref_01.version
     }
   ]
 }

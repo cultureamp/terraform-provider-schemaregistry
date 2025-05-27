@@ -212,7 +212,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Generate API request body from plan
 	schemaString := plan.Schema.ValueString()
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
-	references, diags := utils.ToRegistryReferences(ctx, r.client, plan.Reference)
+	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -256,7 +256,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
 
 	// Map response body to schema
-	plan.ID = plan.Subject
+	plan.ID = types.StringValue(subject)
 	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.SchemaType = types.StringValue(schemaTypeStr)
@@ -336,7 +336,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	subject := plan.Subject.ValueString()
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
 	compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
-	references, diags := utils.ToRegistryReferences(ctx, r.client, plan.Reference)
+	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

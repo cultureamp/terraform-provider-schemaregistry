@@ -46,16 +46,16 @@ func FromRegistryReferences(references []srclient.Reference) types.List {
 		elems = append(elems, objectValue)
 	}
 
-	listValue, diags := types.ListValue(referenceType, elems)
+	refs, diags := types.ListValue(referenceType, elems)
 	if diags.HasError() {
 		return types.ListNull(referenceType)
 	}
 
-	return listValue
+	return refs
 }
 
 // ToRegistryReferences turns a Terraform list of {name,subject,version} into SRclient refs.
-func ToRegistryReferences(ctx context.Context, client *srclient.SchemaRegistryClient, in types.List) ([]srclient.Reference, diag.Diagnostics) {
+func ToRegistryReferences(ctx context.Context, in types.List) ([]srclient.Reference, diag.Diagnostics) {
 	if in.IsNull() || in.IsUnknown() {
 		return nil, nil
 	}
@@ -66,29 +66,17 @@ func ToRegistryReferences(ctx context.Context, client *srclient.SchemaRegistryCl
 		return nil, diags
 	}
 
-	out := make([]srclient.Reference, 0, len(items))
+	refs := make([]srclient.Reference, 0, len(items))
 	for _, it := range items {
 		vers := int(it.Version)
 
-		if vers <= 0 {
-			schema, err := client.GetLatestSchema(it.Subject)
-			if err != nil {
-				diags.AddError(
-					"Error resolving reference version",
-					fmt.Sprintf("Could not get latest schema for subject %s: %s", it.Subject, err.Error()),
-				)
-				return nil, diags
-			}
-			vers = schema.Version()
-		}
-
-		out = append(out, srclient.Reference{
+		refs = append(refs, srclient.Reference{
 			Name:    it.Name,
 			Subject: it.Subject,
 			Version: vers,
 		})
 	}
-	return out, diags
+	return refs, diags
 }
 
 func FromSchemaType(schemaType *srclient.SchemaType) string {
