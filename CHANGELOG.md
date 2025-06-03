@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2025-06-03
+
+### 🐛 Bug Fixes
+
+- Revert update schema definition on read (#101)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#100)
+
 ## [1.4.1] - 2025-05-27
 
 ### 🐛 Bug Fixes
