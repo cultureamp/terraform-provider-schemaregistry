@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 // getEnvOrDefault returns the value of the configuration or the environment variable.
@@ -29,26 +30,44 @@ func ConfigCompose(config ...string) string {
 	return str.String()
 }
 
+// ValidateSchemaString compares two JSON schema strings for semantic equality.
+// It returns an error if the schemas are not semantically equivalent or if
+// validation fails due to parsing errors.
 func ValidateSchemaString(expected, actual string) error {
 	ctx := context.Background()
 
-	expectedSchemaString := jsontypes.NewNormalizedValue(expected)
-	actualSchemaString := jsontypes.NewNormalizedValue(actual)
+	expectedNormalized := jsontypes.NewNormalizedValue(expected)
+	actualNormalized := jsontypes.NewNormalizedValue(actual)
 
-	equal, diags := expectedSchemaString.StringSemanticEquals(ctx, actualSchemaString)
+	equal, diags := expectedNormalized.StringSemanticEquals(ctx, actualNormalized)
 
-	if !equal {
-		return fmt.Errorf("input schema does not match output. Expected: %s, Actual: %s", expected, actual)
+	// Check for validation errors first
+	if diags.HasError() {
+		return fmt.Errorf("schema validation failed: %w", formatDiagnostics(diags))
 	}
 
-	if diags.HasError() {
-		var sb strings.Builder
-		for _, d := range diags.Errors() {
-			sb.WriteString(d.Summary() + "\n")
-			sb.WriteString(d.Detail() + "\n")
-		}
-		return errors.New(sb.String())
+	// Check for semantic inequality
+	if !equal {
+		return fmt.Errorf("schemas are not semantically equal:\nexpected: %s\nactual: %s", expected, actual)
 	}
 
 	return nil
+}
+
+// formatDiagnostics converts diagnostic errors into a single error message.
+func formatDiagnostics(diags diag.Diagnostics) error {
+	if !diags.HasError() {
+		return nil
+	}
+
+	var messages []string
+	for _, d := range diags.Errors() {
+		if detail := d.Detail(); detail != "" {
+			messages = append(messages, fmt.Sprintf("%s: %s", d.Summary(), detail))
+		} else {
+			messages = append(messages, d.Summary())
+		}
+	}
+
+	return errors.New(strings.Join(messages, "; "))
 }

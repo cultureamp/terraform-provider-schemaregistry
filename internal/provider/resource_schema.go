@@ -25,6 +25,7 @@ var (
 	_ resource.Resource                = &schemaResource{}
 	_ resource.ResourceWithConfigure   = &schemaResource{}
 	_ resource.ResourceWithImportState = &schemaResource{}
+	_ resource.ResourceWithModifyPlan  = &schemaResource{}
 )
 
 // NewSchemaResource is a helper function to simplify the provider implementation.
@@ -189,6 +190,56 @@ func (r *schemaResource) Configure(_ context.Context, req resource.ConfigureRequ
 	r.client = client
 }
 
+func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// If the state is null we assume it's a new resource
+	// If the plan is null we assume it's a destroy operation, so don't modify plan
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	// Get current state
+	var state schemaResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Get new plan
+	var plan schemaResourceModel
+	diags = req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Check if the schemas are semantically equivalent
+	oldSchemaValue := state.Schema.ValueString()
+	newSchemaValue := plan.Schema.ValueString()
+	err := ValidateSchemaString(oldSchemaValue, newSchemaValue)
+
+	// If the schemas are semantically equivalent, suppress the plan
+	if err == nil {
+		plan.Schema = state.Schema
+		plan.SchemaID = state.SchemaID
+		plan.Version = state.Version
+		plan.ID = state.ID
+		plan.Subject = state.Subject
+		plan.SchemaType = state.SchemaType
+		plan.Reference = state.Reference
+		plan.CompatibilityLevel = state.CompatibilityLevel
+		plan.HardDelete = state.HardDelete
+
+		// Write the modified plan back
+		setDiags := resp.Plan.Set(ctx, plan)
+		resp.Diagnostics.Append(setDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		return
+	}
+}
+
 func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
 	var plan schemaResourceModel
@@ -280,6 +331,15 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	// Ensure we have a valid subject before proceeding
+	if state.Subject.IsNull() || state.Subject.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Error Reading Schema",
+			"Subject is null or unknown, cannot read schema",
+		)
+		return
+	}
+
 	subject := state.Subject.ValueString()
 
 	// Fetch the latest schema from the registry
@@ -311,8 +371,12 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
 	state.Reference = utils.FromRegistryReferences(schema.References())
-	state.HardDelete = types.BoolValue(state.HardDelete.ValueBool())
 	state.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
+
+	// Ensure hard delete is set to false if not specified
+	if state.HardDelete.IsNull() || state.HardDelete.IsUnknown() {
+		state.HardDelete = types.BoolValue(false)
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -401,7 +465,19 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	hardDelete := state.HardDelete.ValueBool()
+	// Ensure we have a valid subject before proceeding
+	if state.Subject.IsNull() || state.Subject.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Error Deleting Schema",
+			"Subject is null or unknown, cannot delete schema",
+		)
+		return
+	}
+
+	hardDelete := false
+	if !state.HardDelete.IsNull() && !state.HardDelete.IsUnknown() {
+		hardDelete = state.HardDelete.ValueBool()
+	}
 
 	// Delete existing schema
 	err := r.client.DeleteSubject(state.Subject.ValueString(), hardDelete)
@@ -459,6 +535,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		Version:            types.Int64Value(int64(schema.Version())),
 		Reference:          utils.FromRegistryReferences(schema.References()),
 		CompatibilityLevel: types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel)),
+		HardDelete:         types.BoolValue(false), // Default to false for imported resources
 	}
 
 	// Set the state
