@@ -303,9 +303,10 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	schemaType := utils.FromSchemaType(schema.SchemaType())
+	schemaString := state.Schema.ValueString()
 
 	// Update state with refreshed values
-	state.Schema = jsontypes.NewNormalizedValue(schema.Schema())
+	state.Schema = jsontypes.NewNormalizedValue(schemaString)
 	state.SchemaID = types.Int64Value(int64(schema.ID()))
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(int64(schema.Version()))
@@ -377,7 +378,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
-	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
+	plan.Schema = jsontypes.NewNormalizedValue(schemaString)
 	plan.SchemaType = types.StringValue(utils.FromSchemaType(schema.SchemaType()))
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
