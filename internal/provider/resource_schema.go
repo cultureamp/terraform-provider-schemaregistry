@@ -362,16 +362,20 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	schemaString := schema.Schema()
+	schemaID := int64(schema.ID())
+	schemaVersion := int64(schema.Version())
 	schemaType := utils.FromSchemaType(schema.SchemaType())
-	schemaString := state.Schema.ValueString()
+	references := utils.FromRegistryReferences(schema.References())
+	compatString := utils.FromCompatibilityLevelType(*compatibilityLevel)
 
 	// Update state with refreshed values
 	state.Schema = jsontypes.NewNormalizedValue(schemaString)
-	state.SchemaID = types.Int64Value(int64(schema.ID()))
+	state.SchemaID = types.Int64Value(schemaID)
 	state.SchemaType = types.StringValue(schemaType)
-	state.Version = types.Int64Value(int64(schema.Version()))
-	state.Reference = utils.FromRegistryReferences(schema.References())
-	state.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
+	state.Version = types.Int64Value(schemaVersion)
+	state.Reference = references
+	state.CompatibilityLevel = types.StringValue(compatString)
 
 	// Ensure hard delete is set to false if not specified
 	if state.HardDelete.IsNull() || state.HardDelete.IsUnknown() {
@@ -442,7 +446,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update state with refreshed values
-	plan.Schema = jsontypes.NewNormalizedValue(schemaString)
+	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaType = types.StringValue(utils.FromSchemaType(schema.SchemaType()))
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
