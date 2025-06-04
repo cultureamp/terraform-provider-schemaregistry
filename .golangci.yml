@@ -1,44 +1,58 @@
-# Visit https://golangci-lint.run/ for usage documentation
-# and information on other useful linters
+version: "2"
 run:
-  timeout: 10m
   issues-exit-code: 1
   tests: true
-
-issues:
-  max-per-linter: 0
-  max-same-issues: 0
-
 linters:
-  disable-all: true
+  default: none
   enable:
+    - copyloopvar
     - cyclop # Checks if the cyclic complexity of a function is acceptable
     - dogsled # Checks assignments with too many blank identifiers (e.g. x, , , _, := f())
-    - durationcheck
     - dupl # Detects code duplication
-    - errcheck
-    - copyloopvar # Ensures loop variables are not reassigned on each iteration
-    - forcetypeassert
+    - durationcheck # Checks that durations are not too short or too long
+    - errcheck # Checks that all errors are handled
+    - forcetypeassert # Checks that type assertions are used correctly
     - funlen # Detects long functions
     - gocritic # Provides diagnostics that check for bugs, performance and style issues
-    - godot
-    - gofmt # Checks whether code was gofmt-ed
+    - godot # Checks for common mistakes in Go code
     - gosec # Inspects source code for security problems
-    - gosimple
-    - govet
-    - ineffassign
-    - makezero
+    - govet # Checks for suspicious constructs in Go code
+    - ineffassign # Detects ineffectual assignments
+    - makezero # Suggests using make instead of new for slices
     - misspell # Finds commonly misspelled English words in comments
     - nestif # Reports deeply nested if statements
     - nilerr # Finds the code that returns nil even if it checks that the error is not nil
-    - predeclared
-    - staticcheck
+    - predeclared # Checks for the use of predeclared identifiers
+    - staticcheck # Runs staticcheck
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
-    - unused
+    - unused # Reports unused variables
     - whitespace # Detects leading and trailing whitespace
-
-linters-settings:
-  funlen:
-    lines: 120
-    statements: 50
+  settings:
+    funlen:
+      lines: 120
+      statements: 50
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 10
+  max-same-issues: 0
+  new-from-merge-base: main
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
