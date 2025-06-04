@@ -21,9 +21,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Generate Changelog
-        uses: orhun/git-cliff-action@cb015de125f15039c823b8be209c632aa436c76c # v3.3.0
+        uses: orhun/git-cliff-action@4a4a951bc43fafe41cd2348d181853f52356bee7 # v4.4.2
         id: git-cliff
         with:
+          version: latest
           args: -vv --latest --prepend CHANGELOG.md --no-exec # https://git-cliff.org/docs/usage/args
         env:
           GITHUB_REPO: ${{ github.repository }}
