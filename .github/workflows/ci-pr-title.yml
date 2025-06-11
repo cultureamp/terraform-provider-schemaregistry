@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   main:
-    name: Validate PR title
+    name: Semantic PR Title
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:

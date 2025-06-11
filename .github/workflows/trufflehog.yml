@@ -10,6 +10,7 @@ on:
 
 jobs:
   scan:
+    name: Secrets Detection
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
