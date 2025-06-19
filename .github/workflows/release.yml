@@ -42,7 +42,7 @@ jobs:
           gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
           passphrase: ${{ env.PASSPHRASE }}
       - name: Run go-semantic-release
-        if: ${{ github.branch == 'main' && github.event_name == 'push' }}
+        if: ${{ github.ref_name == 'main' }}
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
         with:
           hooks: goreleaser
