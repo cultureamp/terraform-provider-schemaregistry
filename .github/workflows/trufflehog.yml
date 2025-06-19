@@ -11,6 +11,8 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout code

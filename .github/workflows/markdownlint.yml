@@ -3,9 +3,6 @@
 name: Markdown Lint
 run-name: Markdown Lint ${{ github.sha }} by @${{ github.actor }}
 
-permissions:
-  contents: read
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -15,6 +12,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: Markdown Lint
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
