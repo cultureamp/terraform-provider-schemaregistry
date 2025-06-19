@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2025-06-19
+
+### 🐛 Bug Fixes
+
+- Add `ModifyPlan` to suppress schema diffs (#104)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#103)
+- Enable dependabot for github-actions (#106)
+- Enable merge group required checks (#118)
+- Fix release conditional and scope permissions (#122)
+- Allow `workflow_dispatch` trigger for releases (#123)
+
 ## [1.4.2] - 2025-06-03
 
 ### 🐛 Bug Fixes
