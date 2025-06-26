@@ -16,7 +16,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/redpanda v0.37.0
 )
 
-replace github.com/riferrei/srclient => github.com/dstrates/srclient v0.0.0-20250522235454-c6bed0a51a13
+replace github.com/riferrei/srclient => github.com/dstrates/srclient v0.0.0-20250626074010-6fd8e320d4de
 
 require (
 	dario.cat/mergo v1.0.1 // indirect

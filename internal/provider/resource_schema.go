@@ -214,29 +214,37 @@ func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	}
 
 	// Check if the schemas are semantically equivalent
-	oldSchemaValue := state.Schema.ValueString()
-	newSchemaValue := plan.Schema.ValueString()
-	err := ValidateSchemaString(oldSchemaValue, newSchemaValue)
-
-	// If the schemas are semantically equivalent, suppress the plan
-	if err == nil {
-		plan.Schema = state.Schema
-		plan.SchemaID = state.SchemaID
-		plan.Version = state.Version
-		plan.ID = state.ID
-		plan.Subject = state.Subject
-		plan.SchemaType = state.SchemaType
-		plan.Reference = state.Reference
-		plan.CompatibilityLevel = state.CompatibilityLevel
-		plan.HardDelete = state.HardDelete
-
-		// Write the modified plan back
-		setDiags := resp.Plan.Set(ctx, plan)
-		resp.Diagnostics.Append(setDiags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	equal, err := utils.IsSemanticallyEqual(
+		ctx,
+		r.client,
+		state.Subject.ValueString(),
+		plan.Schema.ValueString(),
+		utils.ToSchemaType(plan.SchemaType.ValueString()),
+		references,
+	)
+	if err != nil {
+		// If the schema lookup fails (e.g., subject doesn't exist yet,
+		// referenced schemas don't exist), we should not suppress the plan.
+		// This is normal during creation or when dependencies are changing. We
+		// only log this as debug information and continue without modifying the
+		// plan.
+		tflog.Debug(ctx, "Schema lookup failed during ModifyPlan, continuing without plan modification", map[string]interface{}{
+			"subject": state.Subject.ValueString(),
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Copy state to plan to suppress a no-op diff
+	if equal {
+		plan = state
+		resp.Plan.Set(ctx, plan) // ignore diags: we only copy known-good values
 	}
 }
 

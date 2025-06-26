@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -40,15 +39,6 @@ const (
 
 	expectedSchema = `{"type":"record","name":"TestUpdated","fields":[{"name":"f1","type":"string"},{"name":"f2","type":"int","default":0}]}`
 )
-
-// minNormalize removes all newlines and spaces from a schema string to create a
-// minimal normalized version. Used to compare semantically identical but textually
-// different schemas.
-func minNormalize(schema string) string {
-	compact := strings.ReplaceAll(schema, "\n", "")
-	compact = strings.ReplaceAll(compact, " ", "")
-	return compact
-}
 
 func TestAccSchemaResource_basic(t *testing.T) {
 	subjectName := acctest.RandomWithPrefix("tf-acc-test")
@@ -168,6 +158,98 @@ func TestAccSchemaResource_withReferences(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "references.0.subject", ref01),
 					resource.TestCheckResourceAttr(resourceName, "references.0.version", "2"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccSchemaResource_modifyPlan(t *testing.T) {
+	subjectName := acctest.RandomWithPrefix("tf-acc-test-modifyplan")
+	resourceName := "schemaregistry_schema.test_01"
+
+	// Define test schema variations
+	formattedSchema := `{
+    "type": "record",
+    "name": "ModifyPlanTest",
+    "fields": [
+        {
+            "name": "id",
+            "type": "string"
+        },
+        {
+            "name": "timestamp",
+            "type": "long"
+        }
+    ]
+}`
+
+	// Same schema but with different formatting - should trigger ModifyPlan
+	compactSchema := `{"type":"record","name":"ModifyPlanTest","fields":[{"name":"id","type":"string"},{"name":"timestamp","type":"long"}]}`
+
+	// Different schema - should not trigger ModifyPlan
+	differentSchema := `{
+    "type": "record",
+    "name": "ModifyPlanTest",
+    "fields": [
+        {
+            "name": "id",
+            "type": "string"
+        },
+        {
+            "name": "timestamp",
+            "type": "long"
+        },
+        {
+            "name": "newField",
+            "type": "string",
+            "default": "test"
+        }
+    ]
+}`
+
+	// Compact version of the different schema
+	differentSchemaCompact := `{"type":"record","name":"ModifyPlanTest","fields":[{"name":"id","type":"string"},{"name":"timestamp","type":"long"},{"name":"newField","type":"string","default":"test"}]}`
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Step 1: Create initial schema
+			{
+				Config: testAccSchemaResourceConfig_modifyPlanInitial(subjectName, formattedSchema),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(formattedSchema, state)
+					}),
+				),
+			},
+			// Step 2: Test ModifyPlan with semantically identical but differently formatted schema
+			// This should result in NO plan changes due to ModifyPlan suppression
+			{
+				Config:   testAccSchemaResourceConfig_modifyPlanCompact(subjectName, compactSchema),
+				PlanOnly: true,
+			},
+			// Step 3: Test with a truly different schema - should show plan changes
+			{
+				Config: testAccSchemaResourceConfig_modifyPlanDifferent(subjectName, differentSchema),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(differentSchema, state)
+					}),
+				),
+			},
+			// Step 4: Test ModifyPlan again with the compact version of the different schema
+			// This should result in NO plan changes due to ModifyPlan suppression
+			{
+				Config:   testAccSchemaResourceConfig_modifyPlanCompactDifferent(subjectName, differentSchemaCompact),
+				PlanOnly: true,
 			},
 		},
 	})
@@ -322,7 +404,7 @@ EOF
 }
 `
 	return ConfigCompose(testAccSchemaResourceConfig_base(),
-		fmt.Sprintf(NormalizedTemplate, subject, minNormalize(initialSchema)))
+		fmt.Sprintf(NormalizedTemplate, subject, NormalizeSchemaString(initialSchema)))
 }
 
 // testAccSchemaResourceConfig_basicUpdate creates an updated schema configuration.
@@ -340,4 +422,72 @@ EOF
 `
 	return ConfigCompose(testAccSchemaResourceConfig_base(),
 		fmt.Sprintf(updateTemplate, subject, updatedSchema))
+}
+
+// testAccSchemaResourceConfig_modifyPlanInitial creates a schema configuration for ModifyPlan testing.
+func testAccSchemaResourceConfig_modifyPlanInitial(subject, schema string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "AVRO"
+  compatibility_level  = "NONE"
+  hard_delete          = false
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, schema))
+}
+
+// testAccSchemaResourceConfig_modifyPlanCompact creates a schema with compact formatting.
+func testAccSchemaResourceConfig_modifyPlanCompact(subject, schema string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "AVRO"
+  compatibility_level  = "NONE"
+  hard_delete          = false
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, schema))
+}
+
+// testAccSchemaResourceConfig_modifyPlanDifferent creates a schema with different content.
+func testAccSchemaResourceConfig_modifyPlanDifferent(subject, schema string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "AVRO"
+  compatibility_level  = "NONE"
+  hard_delete          = false
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, schema))
+}
+
+// testAccSchemaResourceConfig_modifyPlanCompactDifferent creates a compact schema with different content.
+func testAccSchemaResourceConfig_modifyPlanCompactDifferent(subject, schema string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "AVRO"
+  compatibility_level  = "NONE"
+  hard_delete          = false
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, schema))
 }

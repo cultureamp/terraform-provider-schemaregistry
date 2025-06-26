@@ -57,8 +57,8 @@ github.com/docker/go-connections v0.5.0 h1:USnMq7hx7gwdVZq1L49hLXaFtUdTADjXGp+uj
 github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6GLaXnqyDdmEXc=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/dstrates/srclient v0.0.0-20250522235454-c6bed0a51a13 h1:imspI4006/bLR+jPq4MUKCpKGejfRDOtz8UnvwlnnlQ=
-github.com/dstrates/srclient v0.0.0-20250522235454-c6bed0a51a13/go.mod h1:byIzLF4UNZzclmzQXXr++Oe1GEH/hNFahUOSTXc7uSc=
+github.com/dstrates/srclient v0.0.0-20250626074010-6fd8e320d4de h1:OYSKr76MccHbabDYHiruMd/Cvjgi917fhFM3ohFHKmc=
+github.com/dstrates/srclient v0.0.0-20250626074010-6fd8e320d4de/go.mod h1:byIzLF4UNZzclmzQXXr++Oe1GEH/hNFahUOSTXc7uSc=
 github.com/ebitengine/purego v0.8.2 h1:jPPGWs2sZ1UgOSgD2bClL0MJIqu58nOmIcBuXr62z1I=
 github.com/ebitengine/purego v0.8.2/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
