@@ -71,3 +71,12 @@ func formatDiagnostics(diags diag.Diagnostics) error {
 
 	return errors.New(strings.Join(messages, "; "))
 }
+
+// NormalizeSchemaString removes all whitespace and newlines from a schema string
+// to create a minimal normalized version for testing purposes.
+func NormalizeSchemaString(schema string) string {
+	normalized := strings.ReplaceAll(schema, "\n", "")
+	normalized = strings.ReplaceAll(normalized, " ", "")
+	normalized = strings.ReplaceAll(normalized, "\t", "")
+	return normalized
+}
