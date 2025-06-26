@@ -38,7 +38,7 @@ testacc: ## Run acceptance tests
 lint: ## Run golangci-lint, go fmt and go vet
 	golangci-lint run && \
 	go vet ./... && \
-	go fmt ./... && \
+	go fmt ./...
 
 .PHONY: tidy
 tidy: ## Run go mod tidy

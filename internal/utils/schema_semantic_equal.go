@@ -25,15 +25,14 @@ func IsSemanticallyEqual(
 	schemaType srclient.SchemaType,
 	refs []srclient.Reference,
 ) (bool, error) {
-
 	req := &srclient.RegisterSchemaRequest{
 		Schema:     schemaString,
 		SchemaType: schemaType,
 		References: refs,
 	}
-
-	// Lookup schema with `normalize = true`
-	_, _, _, err := client.LookupSchemaUnderSubject(ctx, subject, req, true)
+	// Lookup schema with `normalize = true` We only care about the error, but
+	// need to handle all return values
+	_, _, _, err := client.LookupSchemaUnderSubject(ctx, subject, req, true) //nolint:dogsled
 
 	switch {
 	case err == nil:
