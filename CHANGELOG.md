@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-06-26
+
+### 🚀 Features
+
+- Update `ModifyPlan` with semantic lookup (#127)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Update changelog (#112)
+
 ## [1.4.3] - 2025-06-19
 
 ### 🐛 Bug Fixes
