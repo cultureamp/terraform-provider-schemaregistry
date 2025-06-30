@@ -42,6 +42,15 @@ jobs:
         with:
           gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
           passphrase: ${{ env.PASSPHRASE }}
+      - name: "Run go-semantic-release [Dry run]"
+        if: ${{ github.event.pull_request }}
+        uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
+        with:
+          dry: true
+          hooks: goreleaser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
       - name: Run go-semantic-release
         if: ${{ github.ref_name == 'main' }}
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
