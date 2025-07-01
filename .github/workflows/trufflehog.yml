@@ -4,22 +4,35 @@ name: Secrets Detection
 run-name: Secrets Detection ${{ github.sha }} by @${{ github.actor }}
 
 on:
-  merge_group:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_call:
+    inputs:
+      branch:
+        description: "Branch (ref) to scan. Defaults to the ref that triggered the caller."
+        required: false
+        type: string
 
 jobs:
   scan:
+    name: Trufflehog
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: ${{ github.event_name == 'pull_request' }}
     steps:
+      - name: Get caller branch
+        shell: bash
+        run:
+          | # see: https://github.com/trufflesecurity/trufflehog#shallow-cloning, adapted for workflow_call
+          BRANCH="${INPUT_BRANCH:-$GITHUB_REF_NAME}"
+          echo "branch=$BRANCH" >>"$GITHUB_ENV"
+          echo "🔑  Branch to scan : $BRANCH"
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
         with:
+          ref: ${{ env.branch }}
           fetch-depth: 0
       - name: Secret Scanning
         uses: trufflesecurity/trufflehog@6641d4ba5b684fffe195b9820345de1bf19f3181 # v3.89.2
         with:
-          extra_args: --only-verified
+          base: main
+          head: ${{ env.branch }}
+          extra_args: --results=verified
