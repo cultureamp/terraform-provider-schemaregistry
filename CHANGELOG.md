@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.5.0] - 2025-06-26
+
+
+### <!-- 0 -->🚀 Features
+- Feat: update `ModifyPlan` with semantic lookup by @dstrates in [#127](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/127)
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#112](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/112)
+
+
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
 ## [1.5.0] - 2025-06-26
 
 ### 🚀 Features
