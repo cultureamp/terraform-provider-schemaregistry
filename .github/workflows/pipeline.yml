@@ -7,6 +7,10 @@ run-name: Pipeline ${{ github.sha }} by @${{ github.actor }}
 on:
   push:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   find-changed-files:
     runs-on: ubuntu-latest
@@ -54,7 +58,7 @@ jobs:
     if: |
       github.ref != 'refs/heads/main' ||
       needs.changed-files.outputs.any_changed == 'true'
-    uses: ./.github/workflows/trufflehog.yaml
+    uses: ./.github/workflows/trufflehog.yml
     secrets: inherit
     with:
       branch: ${{ github.ref_name }}
@@ -64,7 +68,7 @@ jobs:
     if: |
       github.ref != 'refs/heads/main' &&
       needs.find-changed-files.outputs.lint_any_changed == 'true'
-    uses: ./.github/workflows/lintlint.yml
+    uses: ./.github/workflows/lint.yml
     secrets: inherit
 
   golang:
@@ -81,6 +85,10 @@ jobs:
       github.ref == 'refs/heads/main' ||
       needs.find-changed-files.outputs.release_any_changed == 'true'
     uses: ./.github/workflows/release.yml
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     secrets: inherit
 
   pipeline-success:
