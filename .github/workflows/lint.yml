@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint
+    name: Run Linters
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -79,9 +79,8 @@ jobs:
           recursive: true
           formatter: stylish
 
-      - name: Install TFlint
+      - uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4.1.1
         if: steps.changed.outputs.terraform_any_changed == 'true'
-        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4.1.1
       - run: tflint --init
         if: steps.changed.outputs.terraform_any_changed == 'true'
         env: # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
