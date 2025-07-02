@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+---
 name: Pipeline
 run-name: Pipeline ${{ github.sha }} by @${{ github.actor }}
 
@@ -15,6 +16,7 @@ jobs:
   find-changed-files:
     name: Changed Files
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
     outputs:
       lint_any_changed: ${{ steps.changed-files.outputs.lint_any_changed }}
       app_any_changed: ${{ steps.changed-files.outputs.app_any_changed }}
@@ -52,7 +54,7 @@ jobs:
     name: Secrets
     needs: [find-changed-files]
     if: |
-      github.ref != 'refs/heads/main' ||
+      github.ref != 'refs/heads/main' &&
       needs.find-changed-files.outputs.any_changed == 'true'
     uses: ./.github/workflows/trufflehog.yml
     secrets: inherit
@@ -72,7 +74,7 @@ jobs:
     name: Build and Test
     needs: [find-changed-files]
     if: |
-      github.ref != 'refs/heads/main' &&
+      github.ref == 'refs/heads/main' ||
       needs.find-changed-files.outputs.app_any_changed == 'true'
     uses: ./.github/workflows/ci-go.yml
     secrets: inherit
@@ -102,5 +104,5 @@ jobs:
         uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1
         id: check-pipeline
         with:
-          allowed-skips: "lint,app,release"
+          allowed-skips: "secrets,lint,app,release"
           jobs: ${{ toJSON(needs) }}
