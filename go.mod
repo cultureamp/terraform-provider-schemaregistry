@@ -1,11 +1,11 @@
 module github.com/cultureamp/terraform-provider-schemaregistry
 
-go 1.23.0
+go 1.23.7
 
 toolchain go1.24.1
 
 require (
-	github.com/hashicorp/terraform-plugin-docs v0.21.0
+	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
