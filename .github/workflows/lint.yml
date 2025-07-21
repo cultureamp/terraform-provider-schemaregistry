@@ -73,7 +73,7 @@ jobs:
 
       - name: Docker Compose Linter
         if: steps.changed.outputs.compose_any_changed == 'true'
-        uses: docker-compose-linter/dclint-github-action@374ce3d693105db7f94c375b11c9b4f258a10edc # v1.2.0
+        uses: docker-compose-linter/dclint-github-action@2fcd36eba205351fdb79b3fc1eb0a6d95ce76c6b # v1.4.1
         with:
           path: ${{ steps.changed.outputs.compose_all_changed_files }}
           recursive: true
