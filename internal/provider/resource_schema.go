@@ -241,9 +241,14 @@ func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
-	// Copy state to plan to suppress a no-op diff
+	// Copy only schema-related fields from state to plan to suppress a no-op
+	// schema diff while preserving other fields from plan (compatibility_level,
+	// hard_delete, etc.) so that changes to these fields are properly detected
 	if equal {
-		plan = state
+		plan.Schema = state.Schema
+		plan.SchemaID = state.SchemaID
+		plan.Version = state.Version
+		plan.Reference = state.Reference
 		resp.Plan.Set(ctx, plan) // ignore diags: we only copy known-good values
 	}
 }
@@ -400,6 +405,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan schemaResourceModel
+	var state schemaResourceModel
 
 	// Read Terraform plan data into the model
 	diags := req.Plan.Get(ctx, &plan)
@@ -408,49 +414,39 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	// Read current state
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Generate API request body from plan
-	schemaString := plan.Schema.ValueString()
 	subject := plan.Subject.ValueString()
-	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
-	compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Update existing schema
-	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
+	// Update or fetch the schema
+	schema, err := r.updateSchema(subject, plan, state, references)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating schema",
-			"Could not update schema, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
 
-	// Set compatibility level if specified
-	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
-		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error setting compatibility level",
-				"Could not set compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-		plan.CompatibilityLevel = types.StringValue(plan.CompatibilityLevel.ValueString())
-	} else {
-		// Fetch the global compatibility level from the server
-		cl, err := r.client.GetCompatibilityLevel(subject, true)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error getting compatibility level",
-				"Could not get compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-		plan.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*cl))
+	// Update or fetch the compatibility level
+	compatibilityLevel, err := r.updateCompatibilityLevel(subject, plan)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating compatibility level",
+			err.Error(),
+		)
+		return
 	}
 
 	// Update state with refreshed values
@@ -459,12 +455,57 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
 	plan.Reference = utils.FromRegistryReferences(schema.References())
+	plan.CompatibilityLevel = types.StringValue(compatibilityLevel)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// updateSchema updates the schema if it changed, or fetches the current schema if not.
+func (r *schemaResource) updateSchema(subject string, plan, state schemaResourceModel, references []srclient.Reference) (*srclient.Schema, error) {
+	schemaString := plan.Schema.ValueString()
+	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
+
+	// Check if the schema actually changed (not just formatting)
+	schemaChanged := !plan.Schema.Equal(state.Schema)
+
+	if schemaChanged {
+		// Update existing schema
+		schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
+		if err != nil {
+			return nil, fmt.Errorf("could not update schema: %w", err)
+		}
+		return schema, nil
+	}
+
+	// Schema hasn't changed, just fetch the current schema
+	schema, err := r.client.GetLatestSchema(subject)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch current schema: %w", err)
+	}
+	return schema, nil
+}
+
+// updateCompatibilityLevel updates or fetches the compatibility level.
+func (r *schemaResource) updateCompatibilityLevel(subject string, plan schemaResourceModel) (string, error) {
+	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
+		compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
+		_, err := r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
+		if err != nil {
+			return "", fmt.Errorf("could not set compatibility level: %w", err)
+		}
+		return plan.CompatibilityLevel.ValueString(), nil
+	}
+
+	// Fetch the global compatibility level from the server
+	cl, err := r.client.GetCompatibilityLevel(subject, true)
+	if err != nil {
+		return "", fmt.Errorf("could not get compatibility level: %w", err)
+	}
+	return utils.FromCompatibilityLevelType(*cl), nil
 }
 
 func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
