@@ -80,7 +80,7 @@ jobs:
 
   release:
     name: Release
-    needs: [find-changed-files]
+    needs: [app]
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/release.yml
     permissions:
