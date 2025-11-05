@@ -16,7 +16,6 @@ jobs:
   find-changed-files:
     name: Changed Files
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
     outputs:
       lint_any_changed: ${{ steps.changed-files.outputs.lint_any_changed }}
       app_any_changed: ${{ steps.changed-files.outputs.app_any_changed }}
@@ -81,7 +80,7 @@ jobs:
 
   release:
     name: Release
-    needs: [find-changed-files]
+    needs: [app]
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/release.yml
     permissions:
