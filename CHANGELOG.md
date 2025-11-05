@@ -2,163 +2,196 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: update build and release pipeline by @dstrates in [#185](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/185)
+
+
+## [1.5.1] - 2025-11-05
+
+
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: only call `CreateSchema` on changes and update `ModifyPlan` by @dstrates in [#183](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/183)
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: fix pipeline dependencies by @dstrates in [#133](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/133)
+- Ci: centralise github workflows by @dstrates in [#129](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/129)
+- Chore(release): update changelog by @github-actions[bot] in [#128](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/128)
+
+
 ## [1.5.0] - 2025-06-26
 
-### 🚀 Features
 
-- Update `ModifyPlan` with semantic lookup (#127)
+### <!-- 0 -->🚀 Features
+- Feat: update `ModifyPlan` with semantic lookup by @dstrates in [#127](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/127)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#112](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/112)
 
-- *(release)* Update changelog (#112)
 
 ## [1.4.3] - 2025-06-19
 
-### 🐛 Bug Fixes
 
-- Add `ModifyPlan` to suppress schema diffs (#104)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: add `ModifyPlan` to suppress schema diffs by @dstrates in [#104](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/104)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: allow `workflow_dispatch` trigger for releases by @dstrates in [#123](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/123)
+- Ci: fix release conditional and scope permissions by @dstrates in [#122](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/122)
+- Ci: enable merge group required checks by @dstrates in [#118](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/118)
+- Ci: enable dependabot for github-actions by @dstrates in [#106](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/106)
+- Chore(release): update changelog by @github-actions[bot] in [#103](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/103)
 
-- *(release)* Update changelog (#103)
-- Enable dependabot for github-actions (#106)
-- Enable merge group required checks (#118)
-- Fix release conditional and scope permissions (#122)
-- Allow `workflow_dispatch` trigger for releases (#123)
 
 ## [1.4.2] - 2025-06-03
 
-### 🐛 Bug Fixes
 
-- Revert update schema definition on read (#101)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: revert update schema definition on read by @dstrates in [#101](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/101)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#100](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/100)
 
-- *(release)* Update changelog (#100)
 
 ## [1.4.1] - 2025-05-27
 
-### 🐛 Bug Fixes
 
-- Update version state and references logic (#99)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: update version state and references logic by @dstrates in [#99](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/99)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#96](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/96)
 
-- *(release)* Update changelog (#96)
 
 ## [1.4.0] - 2025-05-23
 
-### 🚀 Features
 
-- *(schema)* Add retry backoff to `CreateSchema` (#95)
+### <!-- 0 -->🚀 Features
+- Feat(schema): add retry backoff to `CreateSchema` by @dstrates in [#95](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/95)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#94](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/94)
 
-- *(release)* Update changelog (#94)
 
 ## [1.3.1] - 2025-05-21
 
-### 🐛 Bug Fixes
 
-- Update schema definition on read (#85)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: update schema definition on read by @dstrates in [#85](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/85)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#88](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/88)
 
-- *(release)* Update changelog (#88)
 
 ## [1.3.0] - 2025-05-02
 
-### 🚀 Features
 
-- Use a custom client for cookie awareness (#89)
+### <!-- 0 -->🚀 Features
+- Feat: use a custom client for cookie awareness by @dstrates in [#89](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/89)
 
-### 📚 Documentation
+### <!-- 10 -->💼 Other
+- Removing vulnerable Github Action package from  tj-actions by @mr-joshcrane in [#80](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/80)
+- Removing vulnerable Github Action package from  tj-actions by @mr-joshcrane
 
-- Add openssf badge (#54)
-- Update attribute references (#60)
+### <!-- 3 -->📚 Documentation
+- Docs: update attribute references by @dstrates in [#60](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/60)
+- Docs: add openssf badge by @dstrates in [#54](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/54)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: update PR title validation workflow in [#87](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/87)
+- Ci: re-enable markdownlint workflow with changed-files bump by @dstrates in [#86](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/86)
+- Chore: address golangci linting issues by @dstrates in [#63](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/63)
+- Ci: ungroup dependency updates by @dstrates in [#57](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/57)
+- Ci: update golangci linters by @dstrates in [#56](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/56)
+- Ci: implement additional workflow checks by @dstrates in [#50](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/50)
+- Ci: update changelog workflow triggers by @dstrates in [#47](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/47)
 
-- Update changelog workflow triggers (#47)
-- Implement additional workflow checks (#50)
-- Update golangci linters (#56)
-- Ungroup dependency updates (#57)
-- Address golangci linting issues (#63)
-- Re-enable markdownlint workflow with changed-files bump (#86)
-- Update PR title validation workflow (#87)
+## New Contributors
+- @mr-joshcrane made their first contribution in [#80](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/80)
 
 ## [1.2.2] - 2024-09-05
 
-### 🐛 Bug Fixes
 
-- Handle undefined subject compatibility levels (#45)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: handle undefined subject compatibility levels by @dstrates in [#45](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/45)
+
 
 ## [1.2.1] - 2024-08-27
 
-### 🐛 Bug Fixes
 
-- Resolve schema normalization (#43)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: resolve schema normalization by @dstrates in [#43](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/43)
 
-### ⚙️ Miscellaneous Tasks
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#40](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/40)
+- Ci: refactor changelog workflow by @dstrates in [#38](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/38)
+- Ci: use `git-cliff` for changelog generation by @dstrates in [#34](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/34)
 
-- Use `git-cliff` for changelog generation (#34)
-- Refactor changelog workflow (#38)
-- *(release)* Update changelog (#40)
+## New Contributors
+- @github-actions[bot] made their first contribution in [#40](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/40)
 
 ## [1.2.0] - 2024-08-13
 
-### 🚀 Features
 
-- Add support for optionally hard deleting schemas (#33)
+### <!-- 0 -->🚀 Features
+- Feat: add support for optionally hard deleting schemas by @dstrates in [#33](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/33)
 
-### 📚 Documentation
+### <!-- 3 -->📚 Documentation
+- Docs: update docs after release v1.1.0 by @dstrates in [#31](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/31)
 
-- Update docs after release v1.1.0 (#31)
 
 ## [1.1.0] - 2024-08-12
 
-### 🚜 Refactor
 
-- [**breaking**] Enforce uppercase `schema_type` values for consistency (#30)
+### <!-- 0 -->🚀 Features
+- Feat: enforce uppercase `schema_type` values for consistency by @dstrates in [#30](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/30)
+
 
 ## [1.0.1] - 2024-07-29
 
-### 🐛 Bug Fixes
 
-- Add support for schema json normalization (#27)
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: add support for schema json normalization by @dstrates in [#27](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/27)
+
+## New Contributors
+- @dependabot[bot] made their first contribution in [#26](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/26)
 
 ## [1.0.0] - 2024-07-25
 
-### 🚜 Refactor
 
-- [**breaking**] Rename provider from `schema-registry` to `schemaregistry` (#18)
+### <!-- 0 -->🚀 Features
+- Feat: initialize repository and implement provider by @dstrates in [#2](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/2)
 
-## [0.0.1] - 2024-07-22
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: improve support for schema references by @dstrates in [#8](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/8)
 
-### 🚀 Features
+### <!-- 10 -->💼 Other
+- Initial commit by @dstrates
 
-- Initialize repository and implement provider (#2)
+### <!-- 2 -->🚜 Refactor
+- Refactor!: rename provider from `schema-registry` to `schemaregistry` by @dstrates in [#18](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/18)
+- Refactor: remove specific version reference in goreleaser in [#13](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/13)
+- Refactor!: rename `kafka-schema-registry` to `schema-registry` as the provider is kafka agnostic in [#12](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/12)
 
-### 🐛 Bug Fixes
+### <!-- 3 -->📚 Documentation
+- Docs: create SECURITY.md by @dstrates in [#16](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/16)
 
-- Improve support for schema references (#8)
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: update release workflow triggers by @dstrates in [#14](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/14)
+- Chore: update Makefile and README by @dstrates in [#11](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/11)
+- Ci: fix go-semantic-release version by @dstrates in [#10](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/10)
+- Ci: fix go-semantic-release version by @dstrates in [#9](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/9)
+- Ci: add semantic-release-go, scorecard and changelog automation by @dstrates in [#7](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/7)
+- Chore: add validation for schema registry URL by @dstrates in [#6](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/6)
+- Chore: update descriptions and errors for clarity by @dstrates in [#5](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/5)
+- Chore: fix typo in workflow, redefine variables and update error message by @dstrates in [#4](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/4)
+- Ci: update release and remove generate docs by @dstrates in [#3](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/3)
 
-### 🚜 Refactor
+## New Contributors
+- @dstrates made their first contribution in [#18](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/18)
+- @ made their first contribution in [#13](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/13)
 
-- [**breaking**] Rename `kafka-schema-registry` to `schema-registry` as the provider is kafka agnostic (#12)
-- Remove specific version reference in goreleaser (#13)
-
-### 📚 Documentation
-
-- Create SECURITY.md (#16)
-
-### ⚙️ Miscellaneous Tasks
-
-- Update release and remove generate docs (#3)
-- Fix typo in workflow, redefine variables and update error message (#4)
-- Update descriptions and errors for clarity (#5)
-- Add validation for schema registry URL (#6)
-- Add semantic-release-go, scorecard and changelog automation (#7)
-- Fix go-semantic-release version (#9)
-- Fix go-semantic-release version (#10)
-- Update Makefile and README (#11)
