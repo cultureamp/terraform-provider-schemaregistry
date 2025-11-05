@@ -255,6 +255,65 @@ func TestAccSchemaResource_modifyPlan(t *testing.T) {
 	})
 }
 
+func TestAccSchemaResource_compatibilityLevelChange(t *testing.T) {
+	subjectName := acctest.RandomWithPrefix("tf-acc-test-compatibility")
+	resourceName := "schemaregistry_schema.test_01"
+
+	schema := `{
+    "type": "record",
+    "name": "Test",
+    "fields": [
+        {
+            "name": "f1",
+            "type": "string"
+        }
+    ]
+}`
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Step 1: Create schema with BACKWARD compatibility
+			{
+				Config: testAccSchemaResourceConfig_withCompatibility(subjectName, schema, "BACKWARD"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(schema, state)
+					}),
+				),
+			},
+			// Step 2: Change only compatibility_level to FULL (schema remains the same)
+			// This should be detected as a change and applied
+			{
+				Config: testAccSchemaResourceConfig_withCompatibility(subjectName, schema, "FULL"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "FULL"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(schema, state)
+					}),
+				),
+			},
+			// Step 3: Change compatibility_level to FORWARD_TRANSITIVE
+			{
+				Config: testAccSchemaResourceConfig_withCompatibility(subjectName, schema, "FORWARD_TRANSITIVE"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "AVRO"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "FORWARD_TRANSITIVE"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateSchemaString(schema, state)
+					}),
+				),
+			},
+		},
+	})
+}
+
 func testAccSchemaResourceConfig_base() string {
 	const baseTemplate = `
 provider "schemaregistry" {
@@ -490,4 +549,20 @@ EOF
 `
 	return ConfigCompose(testAccSchemaResourceConfig_base(),
 		fmt.Sprintf(template, subject, schema))
+}
+
+// testAccSchemaResourceConfig_withCompatibility creates a schema configuration with a specific compatibility level.
+func testAccSchemaResourceConfig_withCompatibility(subject, schema, compatibilityLevel string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "AVRO"
+  compatibility_level  = "%s"
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, compatibilityLevel, schema))
 }
