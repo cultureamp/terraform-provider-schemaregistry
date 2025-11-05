@@ -213,13 +213,13 @@ func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
-	// Check if the schemas are semantically equivalent
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Check if the schemas are semantically equivalent
 	equal, err := utils.IsSemanticallyEqual(
 		ctx,
 		r.client,
@@ -430,7 +430,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Update or fetch the schema
-	schema, err := r.updateSchema(subject, plan, state, references)
+	schema, err := r.updateSchema(ctx, subject, plan, state, references)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating schema",
@@ -465,15 +465,37 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 // updateSchema updates the schema if it changed, or fetches the current schema if not.
-func (r *schemaResource) updateSchema(subject string, plan, state schemaResourceModel, references []srclient.Reference) (*srclient.Schema, error) {
+func (r *schemaResource) updateSchema(ctx context.Context, subject string, plan, state schemaResourceModel, references []srclient.Reference) (*srclient.Schema, error) {
 	schemaString := plan.Schema.ValueString()
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
 
-	// Check if the schema actually changed (not just formatting)
-	schemaChanged := !plan.Schema.Equal(state.Schema)
+	// Schema hasn't changed, just fetch the current schema
+	if plan.Schema.Equal(state.Schema) {
+		schema, err := r.client.GetLatestSchema(subject)
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch current schema: %w", err)
+		}
+		return schema, nil
+	}
 
-	if schemaChanged {
-		// Update existing schema
+	// Schema string has changed, check semantic equivalence. This is a fallback
+	// in case ModifyPlan is skipped or fails
+	equal, err := utils.IsSemanticallyEqual(
+		ctx,
+		r.client,
+		subject,
+		schemaString,
+		schemaType,
+		references,
+	)
+	if err != nil {
+		// If semantic check fails, assume they differ since we know
+		// the strings already differ from above
+		equal = false
+	}
+
+	// Schema has changed, update it
+	if !equal {
 		schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 		if err != nil {
 			return nil, fmt.Errorf("could not update schema: %w", err)
@@ -481,7 +503,7 @@ func (r *schemaResource) updateSchema(subject string, plan, state schemaResource
 		return schema, nil
 	}
 
-	// Schema hasn't changed, just fetch the current schema
+	// Schemas are semantically equivalent, just fetch the current schema
 	schema, err := r.client.GetLatestSchema(subject)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch current schema: %w", err)
