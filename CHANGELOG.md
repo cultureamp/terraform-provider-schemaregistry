@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#184](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/184)
 - Ci: update build and release pipeline by @dstrates in [#185](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/185)
 
 
