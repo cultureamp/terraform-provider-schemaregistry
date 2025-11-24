@@ -67,7 +67,7 @@ jobs:
 
       - name: Actionlint (GitHub workflows)
         if: steps.changed.outputs.workflows_any_changed == 'true'
-        uses: devops-actions/actionlint@c6744a34774e4e1c1df0ff66bdb07ec7ee480ca0 # v0.1.9
+        uses: devops-actions/actionlint@467e2ce19b2310e93c9ffa0b50fe31f86b5a7f23 # v0.1.10
         with:
           shellcheck_opts: "-e SC2129 --severity=error"
 
