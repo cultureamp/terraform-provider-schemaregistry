@@ -62,7 +62,7 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
       - name: Get Release Version
         run: echo "RELEASE_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
-      - uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
+      - uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
         with:
           add-paths: CHANGELOG.md
           commit-message: "chore(release): update changelog after ${{ env.RELEASE_TAG }}"
