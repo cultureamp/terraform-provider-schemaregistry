@@ -31,7 +31,7 @@ jobs:
           ref: ${{ env.branch }}
           fetch-depth: 0
       - name: Secret Scanning
-        uses: trufflesecurity/trufflehog@aade3bff5594fe8808578dd4db3dfeae9bf2abdc # v3.91.1
+        uses: trufflesecurity/trufflehog@821e8b9e5cdf8dc484dd23e06f78941fcf6b9191 # v3.91.2
         with:
           base: main
           head: ${{ env.branch }}
