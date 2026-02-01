@@ -1,5 +1,6 @@
-DOCKER_COMPOSE_RUN := docker compose run --rm
-VERSION ?= 1.0.0
+VERSION ?= 1.5.1
+HOSTNAME=local
+NAMESPACE=cultureamp
 PROVIDER_NAME = terraform-provider-schemaregistry
 ARCHS = amd64 arm64 arm 386
 PLATFORMS = linux darwin windows freebsd
@@ -30,6 +31,11 @@ $(foreach platform,$(PLATFORMS),$(foreach arch,$(ARCHS),$(eval $(call build_zip_
 build: ## Build the provider for the current architecture
 	GOARCH=$(shell go env GOARCH) GOOS=$(shell go env GOOS) go build -o $(PROVIDER_NAME)_$(shell go env GOOS)_$(shell go env GOARCH)
 
+.PHONY: install
+install: ## Install the provider for local testing
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${PROVIDER_NAME}/${VERSION}/${OS_ARCH}
+	cp ./dist/${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${PROVIDER_NAME}/${VERSION}/${OS_ARCH}/${PROVIDER_NAME}_${VERSION}
+
 .PHONY: testacc
 testacc: ## Run acceptance tests
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
@@ -48,7 +54,6 @@ tidy: ## Run go mod tidy
 download: ## Run go mod download
 	go mod download
 
-# Clean the build artifacts
 .PHONY: clean
 clean: ## Clean up the build artifacts
 	rm -f terraform-provider-schemaregistry
