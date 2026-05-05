@@ -40,14 +40,17 @@ type Provider struct {
 
 // ProviderModel maps provider schema data to a Go type.
 type ProviderModel struct {
-	URL      types.String `tfsdk:"schema_registry_url"`
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
+	URL        types.String `tfsdk:"schema_registry_url"`
+	Username   types.String `tfsdk:"username"`
+	Password   types.String `tfsdk:"password"`
+	MaxRetries types.Int64  `tfsdk:"max_retries"`
 }
 
 const (
 	schemaRegistryURLPattern = `^https?://.*$`
 	defaultTimeout           = 30 * time.Second
+	defaultMaxRetries        = 6
+	retryBaseInterval        = 100 * time.Millisecond
 )
 
 var schemaRegistryURLRegex = regexp.MustCompile(schemaRegistryURLPattern)
@@ -81,6 +84,10 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest,
 				Description: "Password for Schema Registry API. May use SCHEMA_REGISTRY_PASSWORD environment variable.",
 				Optional:    true,
 				Sensitive:   true,
+			},
+			"max_retries": schema.Int64Attribute{
+				Description: "Maximum number of retry attempts for GetSchema calls using exponential backoff. Defaults to 6.",
+				Optional:    true,
 			},
 		},
 	}
@@ -128,14 +135,12 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	// Create Schema Registry client with custom HTTP client
 	client := srclient.NewSchemaRegistryClient(url, srclient.WithClient(httpClient))
 
-	// Set retry delays for GetSchema calls
-	client.SetRetryDelays([]time.Duration{
-		50 * time.Millisecond,
-		100 * time.Millisecond,
-		200 * time.Millisecond,
-		400 * time.Millisecond,
-		800 * time.Millisecond,
-	})
+	// Set retry delays for GetSchema calls using exponential backoff
+	maxRetries := defaultMaxRetries
+	if !config.MaxRetries.IsNull() {
+		maxRetries = int(config.MaxRetries.ValueInt64())
+	}
+	client.SetRetryDelays(buildRetryDelays(maxRetries, retryBaseInterval))
 
 	if username != "" && password != "" {
 		client.SetCredentials(username, password)

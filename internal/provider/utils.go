@@ -6,10 +6,20 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
+
+// buildRetryDelays returns n exponential backoff durations starting from base.
+func buildRetryDelays(n int, base time.Duration) []time.Duration {
+	delays := make([]time.Duration, n)
+	for i := range delays {
+		delays[i] = base << i
+	}
+	return delays
+}
 
 // getEnvOrDefault returns the value of the configuration or the environment variable.
 func getEnvOrDefault(envVar, defaultValue string) string {
