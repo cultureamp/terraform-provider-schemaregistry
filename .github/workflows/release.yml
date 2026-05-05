@@ -35,9 +35,16 @@ jobs:
           gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
           passphrase: ${{ env.PASSPHRASE }}
       - name: Run go-semantic-release
+        id: semrel
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6.3.0
+        if: steps.semrel.outputs.version != ''
         with:
-          hooks: goreleaser
+          version: latest
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
