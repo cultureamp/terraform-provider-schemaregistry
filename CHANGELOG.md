@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: run goreleaser directly instead of via go-semantic-release hook by @dstrates in [#222](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/222)
+
+
+## [1.6.0] - 2026-05-05
+
+
+### <!-- 0 -->🚀 Features
+- Feat: add maxRetries to provider configuration by @dstrates in [#219](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/219)
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Ci: fix goreleaser archive formats field rename by @dstrates in [#221](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/221)
+
+
+## [1.5.2] - 2026-05-05
+
+
+### <!-- 1 -->🐛 Bug Fixes
+- Fix: resolve dependabot vulnerabilities and bump deps by @dstrates in [#220](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/220)
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore(release): update changelog by @github-actions[bot] in [#184](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/184)
 - Ci: update build and release pipeline by @dstrates in [#185](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/185)
 
 
