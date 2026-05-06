@@ -6,6 +6,11 @@ run-name: Release ${{ github.sha }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to re-release (e.g. v1.5.2). Leave empty for a new semantic release."
+        required: false
+        type: string
   workflow_call:
 
 jobs:
@@ -24,6 +29,7 @@ jobs:
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version-file: "go.mod"
@@ -36,12 +42,13 @@ jobs:
           passphrase: ${{ env.PASSPHRASE }}
       - name: Run go-semantic-release
         id: semrel
+        if: inputs.tag == ''
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6.3.0
-        if: steps.semrel.outputs.version != ''
+        if: steps.semrel.outputs.version != '' || inputs.tag != ''
         with:
           version: latest
           args: release --clean
