@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/cultureamp/terraform-provider-schemaregistry/internal/utils"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -32,15 +31,15 @@ type schemaDataSource struct {
 
 // schemaDataSourceModel describes the data source data model.
 type schemaDataSourceModel struct {
-	ID                 types.String         `tfsdk:"id"`
-	Subject            types.String         `tfsdk:"subject"`
-	Schema             jsontypes.Normalized `tfsdk:"schema"`
-	SchemaID           types.Int64          `tfsdk:"schema_id"`
-	SchemaType         types.String         `tfsdk:"schema_type"`
-	Version            types.Int64          `tfsdk:"version"`
-	Reference          types.List           `tfsdk:"reference"`
-	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
-	HardDelete         types.Bool           `tfsdk:"hard_delete"`
+	ID                 types.String `tfsdk:"id"`
+	Subject            types.String `tfsdk:"subject"`
+	Schema             types.String `tfsdk:"schema"`
+	SchemaID           types.Int64  `tfsdk:"schema_id"`
+	SchemaType         types.String `tfsdk:"schema_type"`
+	Version            types.Int64  `tfsdk:"version"`
+	Reference          types.List   `tfsdk:"reference"`
+	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
+	HardDelete         types.Bool   `tfsdk:"hard_delete"`
 }
 
 // Metadata returns the data source type name.
@@ -65,9 +64,9 @@ func (d *schemaDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Required:    true,
 			},
 			"schema": schema.StringAttribute{
-				Description: "The schema definition.",
-				Computed:    true,
-				CustomType:  jsontypes.NormalizedType{},
+				Description: "The schema definition. For AVRO and JSON this is a JSON document; " +
+					"for PROTOBUF it is the raw Protocol Buffers IDL text.",
+				Computed: true,
 			},
 			"schema_id": schema.Int64Attribute{
 				Description: "The ID of the schema.",
@@ -211,7 +210,7 @@ func (d *schemaDataSource) mapSchemaToOutputs(subject string, schema *srclient.S
 	return schemaDataSourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             jsontypes.NewNormalizedValue(schema.Schema()),
+		Schema:             types.StringValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(utils.FromSchemaType(schema.SchemaType())),
 		Version:            types.Int64Value(int64(schema.Version())),

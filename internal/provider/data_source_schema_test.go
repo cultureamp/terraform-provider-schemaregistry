@@ -81,6 +81,27 @@ func TestAccSchemaDataSource_multipleVersions(t *testing.T) {
 	})
 }
 
+func TestAccSchemaDataSource_protobuf(t *testing.T) {
+	datasourceName := "data.schemaregistry_schema.test_01"
+	subjectName := acctest.RandomWithPrefix("tf-acc-test-subject-protobuf")
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSchemaDataSourceConfig_protobuf(subjectName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(datasourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(datasourceName, "schema_type", "PROTOBUF"),
+					resource.TestCheckResourceAttrWith(datasourceName, "schema", func(state string) error {
+						return ValidateProtoSchemaString(protoInitialSchema, state)
+					}),
+				),
+			},
+		},
+	})
+}
+
 func testAccSchemaDataSourceConfig_base() string {
 	const baseTemplate = `
 provider "schemaregistry" {
@@ -125,6 +146,26 @@ output "schema" {
 `
 	return ConfigCompose(testAccSchemaDataSourceConfig_base(),
 		fmt.Sprintf(singleTemplate, subject))
+}
+
+func testAccSchemaDataSourceConfig_protobuf(subject string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "PROTOBUF"
+  compatibility_level  = "NONE"
+  hard_delete          = false
+  schema               = <<EOF
+%s
+EOF
+}
+
+data "schemaregistry_schema" "test_01" {
+  subject = schemaregistry_schema.test_01.subject
+}
+`
+	return ConfigCompose(testAccSchemaDataSourceConfig_base(),
+		fmt.Sprintf(template, subject, protoInitialSchema))
 }
 
 func testAccSchemaDataSourceConfig_update(subject string) string {

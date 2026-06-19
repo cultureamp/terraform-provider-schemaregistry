@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	"github.com/cultureamp/terraform-provider-schemaregistry/internal/utils"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,15 +39,15 @@ type schemaResource struct {
 
 // schemaResourceModel describes the resource data model.
 type schemaResourceModel struct {
-	ID                 types.String         `tfsdk:"id"`
-	Subject            types.String         `tfsdk:"subject"`
-	Schema             jsontypes.Normalized `tfsdk:"schema"`
-	SchemaID           types.Int64          `tfsdk:"schema_id"`
-	SchemaType         types.String         `tfsdk:"schema_type"`
-	Version            types.Int64          `tfsdk:"version"`
-	Reference          types.List           `tfsdk:"references"`
-	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
-	HardDelete         types.Bool           `tfsdk:"hard_delete"`
+	ID                 types.String `tfsdk:"id"`
+	Subject            types.String `tfsdk:"subject"`
+	Schema             types.String `tfsdk:"schema"`
+	SchemaID           types.Int64  `tfsdk:"schema_id"`
+	SchemaType         types.String `tfsdk:"schema_type"`
+	Version            types.Int64  `tfsdk:"version"`
+	Reference          types.List   `tfsdk:"references"`
+	CompatibilityLevel types.String `tfsdk:"compatibility_level"`
+	HardDelete         types.Bool   `tfsdk:"hard_delete"`
 }
 
 // Metadata returns the resource type name.
@@ -85,9 +84,9 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"schema": schema.StringAttribute{
-				Description: "The schema definition.",
-				Required:    true,
-				CustomType:  jsontypes.NormalizedType{},
+				Description: "The schema definition. For AVRO and JSON this is a JSON document; " +
+					"for PROTOBUF it is the raw Protocol Buffers IDL text.",
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(2),
 				},
@@ -319,9 +318,14 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Convert *srclient.SchemaType to string
 	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
 
-	// Map response body to schema
+	// Map response body to schema. We deliberately do NOT overwrite plan.Schema
+	// with the registry's returned schema string. The registry may reformat the
+	// schema (whitespace, field ordering, proto canonicalization), and replacing
+	// the planned config value with that form would trip the framework's
+	// "Provider produced inconsistent result after apply" check. The planned
+	// value is semantically equivalent to what was registered, so we keep it and
+	// rely on ModifyPlan to suppress any future no-op diffs.
 	plan.ID = types.StringValue(subject)
-	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.SchemaType = types.StringValue(schemaTypeStr)
 	plan.Version = types.Int64Value(int64(schema.Version()))
@@ -383,7 +387,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	compatString := utils.FromCompatibilityLevelType(*compatibilityLevel)
 
 	// Update state with refreshed values
-	state.Schema = jsontypes.NewNormalizedValue(schemaString)
+	state.Schema = types.StringValue(schemaString)
 	state.SchemaID = types.Int64Value(schemaID)
 	state.SchemaType = types.StringValue(schemaType)
 	state.Version = types.Int64Value(schemaVersion)
@@ -449,8 +453,9 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Update state with refreshed values
-	plan.Schema = jsontypes.NewNormalizedValue(schema.Schema())
+	// Update state with refreshed values. As in Create, we keep the planned
+	// config value for plan.Schema rather than the registry's (possibly
+	// re-formatted) form to avoid an inconsistent-result-after-apply error.
 	plan.SchemaType = types.StringValue(utils.FromSchemaType(schema.SchemaType()))
 	plan.SchemaID = types.Int64Value(int64(schema.ID()))
 	plan.Version = types.Int64Value(int64(schema.Version()))
@@ -604,7 +609,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 	state := schemaResourceModel{
 		ID:                 types.StringValue(subject),
 		Subject:            types.StringValue(subject),
-		Schema:             jsontypes.NewNormalizedValue(schema.Schema()),
+		Schema:             types.StringValue(schema.Schema()),
 		SchemaID:           types.Int64Value(int64(schema.ID())),
 		SchemaType:         types.StringValue(schemaType),
 		Version:            types.Int64Value(int64(schema.Version())),

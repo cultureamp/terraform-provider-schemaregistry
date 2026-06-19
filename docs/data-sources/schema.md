@@ -43,7 +43,7 @@ output "schema" {
 - `compatibility_level` (String) The compatibility level of the schema.
 - `id` (String) The globally unique ID of the schema.
 - `reference` (Attributes List) The referenced schema list. (see [below for nested schema](#nestedatt--reference))
-- `schema` (String) The schema definition.
+- `schema` (String) The schema definition. For AVRO and JSON this is a JSON document; for PROTOBUF it is the raw Protocol Buffers IDL text.
 - `schema_id` (Number) The ID of the schema.
 - `schema_type` (String) The schema format.
 

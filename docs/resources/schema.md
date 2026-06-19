@@ -61,7 +61,7 @@ resource "schemaregistry_schema" "example_01" {
 
 ### Required
 
-- `schema` (String) The schema definition.
+- `schema` (String) The schema definition. For AVRO and JSON this is a JSON document; for PROTOBUF it is the raw Protocol Buffers IDL text.
 - `schema_type` (String) The schema format.
 - `subject` (String) The subject related to the schema.
 

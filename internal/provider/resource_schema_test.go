@@ -108,6 +108,97 @@ func TestAccSchemaResource_basic(t *testing.T) {
 	})
 }
 
+// protoInitialSchema is a basic proto3 schema. PROTOBUF schemas are raw
+// Protocol Buffers IDL, not JSON, so they must be registered verbatim.
+const protoInitialSchema = `syntax = "proto3";
+package test;
+
+message Test {
+  string f1 = 1;
+}`
+
+// protoInitialCompact is semantically identical to protoInitialSchema but
+// formatted on a single line. Whitespace must still separate tokens (unlike
+// JSON, proto cannot have all whitespace stripped), so we cannot reuse
+// NormalizeSchemaString here for the config.
+const protoInitialCompact = `syntax = "proto3"; package test; message Test { string f1 = 1; }`
+
+// protoUpdatedSchema adds a field, which is a backward-compatible change in
+// proto3.
+const protoUpdatedSchema = `syntax = "proto3";
+package test;
+
+message Test {
+  string f1 = 1;
+  int32 f2 = 2;
+}`
+
+func TestAccSchemaResource_protobuf(t *testing.T) {
+	subjectName := acctest.RandomWithPrefix("tf-acc-test-protobuf")
+	resourceName := "schemaregistry_schema.test_01"
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing: a raw proto schema (not JSON) must be
+			// accepted as-is.
+			{
+				Config: testAccSchemaResourceConfig_protobuf(subjectName, protoInitialSchema, "BACKWARD"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "PROTOBUF"),
+					resource.TestCheckResourceAttr(resourceName, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateProtoSchemaString(protoInitialSchema, state)
+					}),
+				),
+			},
+			// Semantic No-Diff testing (PlanOnly): a differently-formatted but
+			// equivalent proto should be suppressed by ModifyPlan.
+			{
+				Config:   testAccSchemaResourceConfig_protobuf(subjectName, protoInitialCompact, "BACKWARD"),
+				PlanOnly: true,
+			},
+			// Update and Read testing: adding a field is backward compatible.
+			{
+				Config: testAccSchemaResourceConfig_protobuf(subjectName, protoUpdatedSchema, "BACKWARD"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "subject", subjectName),
+					resource.TestCheckResourceAttr(resourceName, "schema_type", "PROTOBUF"),
+					resource.TestCheckResourceAttrSet(resourceName, "schema_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "version"),
+					resource.TestCheckResourceAttrWith(resourceName, "schema", func(state string) error {
+						return ValidateProtoSchemaString(protoUpdatedSchema, state)
+					}),
+				),
+			},
+			// ImportState testing.
+			{
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 {
+						return fmt.Errorf("expected 1 state, got %d", len(states))
+					}
+					state := states[0]
+					if state.Attributes["subject"] != subjectName {
+						return fmt.Errorf("expected subject %s, got %s", subjectName, state.Attributes["subject"])
+					}
+					if state.Attributes["schema_type"] != "PROTOBUF" {
+						return fmt.Errorf("expected schema_type PROTOBUF, got %s", state.Attributes["schema_type"])
+					}
+					if err := ValidateProtoSchemaString(protoUpdatedSchema, state.Attributes["schema"]); err != nil {
+						return fmt.Errorf("schema validation error: %v", err)
+					}
+					return nil
+				},
+			},
+		},
+	})
+}
+
 func TestAccSchemaResource_withReferences(t *testing.T) {
 	subjectName := acctest.RandomWithPrefix("tf-acc-test")
 	ref01 := acctest.RandomWithPrefix("tf-acc-test-ref")
@@ -429,6 +520,23 @@ resource "schemaregistry_schema" "test_01" {
 `
 	return ConfigCompose(testAccSchemaResourceConfig_base(),
 		fmt.Sprintf(updateTemplate, ref01, subject))
+}
+
+// testAccSchemaResourceConfig_protobuf creates a PROTOBUF schema configuration.
+// The schema is raw Protocol Buffers IDL, passed through unchanged.
+func testAccSchemaResourceConfig_protobuf(subject, schema, compatibilityLevel string) string {
+	const template = `
+resource "schemaregistry_schema" "test_01" {
+  subject              = "%s"
+  schema_type          = "PROTOBUF"
+  compatibility_level  = "%s"
+  schema               = <<EOF
+%s
+EOF
+}
+`
+	return ConfigCompose(testAccSchemaResourceConfig_base(),
+		fmt.Sprintf(template, subject, compatibilityLevel, schema))
 }
 
 // testAccSchemaResourceConfig_basic creates a basic schema configuration for testing.

@@ -82,6 +82,17 @@ func formatDiagnostics(diags diag.Diagnostics) error {
 	return errors.New(strings.Join(messages, "; "))
 }
 
+// ValidateProtoSchemaString compares two PROTOBUF schema strings for equivalence,
+// ignoring whitespace differences. PROTOBUF schemas are not JSON, so they cannot
+// be compared with ValidateSchemaString; instead we strip all whitespace from
+// both sides and compare the remaining tokens.
+func ValidateProtoSchemaString(expected, actual string) error {
+	if NormalizeSchemaString(expected) != NormalizeSchemaString(actual) {
+		return fmt.Errorf("proto schemas are not equivalent:\nexpected: %s\nactual: %s", expected, actual)
+	}
+	return nil
+}
+
 // NormalizeSchemaString removes all whitespace and newlines from a schema string
 // to create a minimal normalized version for testing purposes.
 func NormalizeSchemaString(schema string) string {
