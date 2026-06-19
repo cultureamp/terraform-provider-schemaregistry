@@ -14,7 +14,7 @@ import (
 const (
 	testAccProviderVersion = "test"
 	testAccProviderType    = "schemaregistry"
-	redpandaContainerImage = "docker.redpanda.com/redpandadata/redpanda:v24.1.15"
+	redpandaContainerImage = "docker.redpanda.com/redpandadata/redpanda:v26.1.10"
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
