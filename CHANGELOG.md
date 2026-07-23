@@ -8,8 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore: Update team ownership to data-products by @m-dwyer in [#231](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/231)
+- Ci: allow re-releasing prior tags to fix assets by @dstrates in [#224](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/224)
+- Chore(release): update changelog by @github-actions[bot] in [#186](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/186)
 - Ci: run goreleaser directly instead of via go-semantic-release hook by @dstrates in [#222](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/222)
 
+## New Contributors
+- @m-dwyer made their first contribution in [#231](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/231)
 
 ## [1.6.0] - 2026-05-05
 
