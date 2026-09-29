@@ -1,0 +1,26 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-provider-schemaregistry
+  description: >
+    Terraform provider for managing Avro schemas in a Confluent-compatible Schema
+    Registry. Provides the schemaregistry_schema resource and data source.
+    Consumed by kafka-ops through the @cultureamp/provider-schemaregistry CDKTF
+    binding generated in cdktf-providers.
+  links:
+    - title: Source
+      url: https://github.com/cultureamp/terraform-provider-schemaregistry
+    - title: Releases
+      url: https://github.com/cultureamp/terraform-provider-schemaregistry/releases
+  tags:
+    - camp-data-intelligence
+    - users-internal
+    - data-classification-none
+    - asset-criticality-high
+  annotations:
+    github.com/project-slug: cultureamp/terraform-provider-schemaregistry
+    github.com/team-slug: cultureamp/data-products
+spec:
+  type: library
+  owner: data-products
+  lifecycle: production
