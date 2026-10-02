@@ -200,7 +200,7 @@ func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// Get current state
 	var state schemaResourceModel
 	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -208,13 +208,13 @@ func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// Get new plan
 	var plan schemaResourceModel
 	diags = req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -257,7 +257,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	// Retrieve values from plan
 	var plan schemaResourceModel
 	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -277,7 +277,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	schemaString := plan.Schema.ValueString()
 	schemaType := utils.ToSchemaType(plan.SchemaType.ValueString())
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -329,7 +329,7 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	// Set state to fully populated data
 	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -339,7 +339,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	var state schemaResourceModel
 
 	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -397,7 +397,7 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -409,14 +409,14 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Read Terraform plan data into the model
 	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read current state
 	diags = req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -424,7 +424,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	subject := plan.Subject.ValueString()
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -458,7 +458,7 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	plan.CompatibilityLevel = types.StringValue(compatibilityLevel)
 
 	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, plan.Subject, plan.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -535,7 +535,7 @@ func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	// Get current state
 	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -615,7 +615,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 
 	// Set the state
 	diags := resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
+	utils.AppendSchemaDiagnostics(&resp.Diagnostics, diags, state.Subject, state.Version)
 	if resp.Diagnostics.HasError() {
 		return
 	}
