@@ -456,6 +456,15 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Generate API request body from plan
 	subject := plan.Subject.ValueString()
+
+	// Set normalize before registering, so the registration follows it.
+	if !plan.Normalize.IsNull() && !plan.Normalize.IsUnknown() {
+		if err := r.configClient.SetNormalize(ctx, subject, plan.Normalize.ValueBool()); err != nil {
+			resp.Diagnostics.AddError("Error updating normalize", fmt.Sprintf("Could not set normalize for subject %s: %s", subject, err))
+			return
+		}
+	}
+
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -480,14 +489,6 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 			err.Error(),
 		)
 		return
-	}
-
-	// Set normalize if specified
-	if !plan.Normalize.IsNull() && !plan.Normalize.IsUnknown() {
-		if err := r.configClient.SetNormalize(ctx, subject, plan.Normalize.ValueBool()); err != nil {
-			resp.Diagnostics.AddError("Error updating normalize", fmt.Sprintf("Could not set normalize for subject %s: %s", subject, err))
-			return
-		}
 	}
 
 	// Update state with refreshed values
@@ -639,7 +640,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		return
 	}
 
-	// Retrieve the subject-level normalize config
+	// Retrieve the subject-level normalize config.
 	normalizeValue := types.BoolNull()
 	n, err := r.configClient.GetNormalize(ctx, subject)
 	if err != nil {
