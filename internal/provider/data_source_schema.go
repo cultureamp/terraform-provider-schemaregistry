@@ -138,16 +138,16 @@ func (d *schemaDataSource) Configure(_ context.Context, req datasource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*srclient.SchemaRegistryClient)
+	data, ok := req.ProviderData.(*providerData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *srclient.SchemaRegistryClient, got: %T.", req.ProviderData),
+			fmt.Sprintf("Expected *providerData, got: %T.", req.ProviderData),
 		)
 		return
 	}
 
-	d.client = client
+	d.client = data.client
 }
 
 // Read fetches the schema details from the Schema Registry.

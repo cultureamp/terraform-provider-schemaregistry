@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/cultureamp/terraform-provider-schemaregistry/internal/subjectconfig"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -36,6 +37,12 @@ type Provider struct {
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
+}
+
+// providerData is passed to resources and data sources.
+type providerData struct {
+	client       *srclient.SchemaRegistryClient
+	configClient *subjectconfig.Client
 }
 
 // ProviderModel maps provider schema data to a Go type.
@@ -151,8 +158,9 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	}
 
 	// Make the client available during DataSource and Resource type Configure methods.
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	configClient := subjectconfig.New(url, httpClient, username, password)
+	resp.DataSourceData = &providerData{client: client, configClient: configClient}
+	resp.ResourceData = &providerData{client: client, configClient: configClient}
 
 	tflog.Info(ctx, "Configured Schema Registry client", map[string]any{"success": true})
 }

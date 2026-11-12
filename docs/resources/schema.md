@@ -69,6 +69,7 @@ resource "schemaregistry_schema" "example_01" {
 
 - `compatibility_level` (String) The compatibility level of the schema.
 - `hard_delete` (Boolean) Controls whether a schema should be soft or hard deleted.
+- `normalize` (Boolean) Sets the subject-level normalize config. When false, Schema Registry does not normalize schemas for this subject, even if the global config enables it. Leave unset to not manage it. Removing it does not change the value in Schema Registry.
 - `references` (Attributes List) The referenced schema list. (see [below for nested schema](#nestedatt--references))
 
 ### Read-Only
