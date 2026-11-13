@@ -291,11 +291,9 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	// Set normalize before registering, so the registration follows it.
-	if !plan.Normalize.IsNull() && !plan.Normalize.IsUnknown() {
-		if err := r.configClient.SetNormalize(ctx, subject, plan.Normalize.ValueBool()); err != nil {
-			resp.Diagnostics.AddError("Error setting normalize", fmt.Sprintf("Could not set normalize for subject %s: %s", subject, err))
-			return
-		}
+	if err := r.setNormalize(ctx, subject, plan.Normalize); err != nil {
+		resp.Diagnostics.AddError("Error setting normalize", err.Error())
+		return
 	}
 
 	// Create new schema resource
@@ -308,29 +306,13 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Set compatibility level if specified
-	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
-		compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
-		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error setting compatibility level",
-				"Could not set compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		// Fetch the current compatibility level from the server
-		compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error getting compatibility level",
-				"Could not get compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-		plan.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
+	// Set compatibility level if specified, otherwise fetch it from the server
+	compatibilityLevel, err := r.updateCompatibilityLevel(subject, plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error setting compatibility level", err.Error())
+		return
 	}
+	plan.CompatibilityLevel = types.StringValue(compatibilityLevel)
 
 	// Convert *srclient.SchemaType to string
 	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
@@ -406,22 +388,12 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Reference = references
 	state.CompatibilityLevel = types.StringValue(compatString)
 
-	// Only check drift when normalize is managed.
-	if !state.Normalize.IsNull() {
-		normalize, err := r.configClient.GetNormalize(ctx, subject)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error getting normalize",
-				fmt.Sprintf("Could not get normalize for subject %s: %s", subject, err),
-			)
-			return
-		}
-		if normalize == nil {
-			state.Normalize = types.BoolNull()
-		} else {
-			state.Normalize = types.BoolValue(*normalize)
-		}
+	normalize, err := r.readNormalize(ctx, subject, state.Normalize)
+	if err != nil {
+		resp.Diagnostics.AddError("Error getting normalize", err.Error())
+		return
 	}
+	state.Normalize = normalize
 
 	// Ensure hard delete is set to false if not specified
 	if state.HardDelete.IsNull() || state.HardDelete.IsUnknown() {
@@ -458,11 +430,9 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 	subject := plan.Subject.ValueString()
 
 	// Set normalize before registering, so the registration follows it.
-	if !plan.Normalize.IsNull() && !plan.Normalize.IsUnknown() {
-		if err := r.configClient.SetNormalize(ctx, subject, plan.Normalize.ValueBool()); err != nil {
-			resp.Diagnostics.AddError("Error updating normalize", fmt.Sprintf("Could not set normalize for subject %s: %s", subject, err))
-			return
-		}
+	if err := r.setNormalize(ctx, subject, plan.Normalize); err != nil {
+		resp.Diagnostics.AddError("Error updating normalize", err.Error())
+		return
 	}
 
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
@@ -570,6 +540,33 @@ func (r *schemaResource) updateCompatibilityLevel(subject string, plan schemaRes
 		return "", fmt.Errorf("could not get compatibility level: %w", err)
 	}
 	return utils.FromCompatibilityLevelType(*cl), nil
+}
+
+// setNormalize sets the subject-level normalize config. It does nothing when normalize is unset.
+func (r *schemaResource) setNormalize(ctx context.Context, subject string, normalize types.Bool) error {
+	if normalize.IsNull() || normalize.IsUnknown() {
+		return nil
+	}
+	if err := r.configClient.SetNormalize(ctx, subject, normalize.ValueBool()); err != nil {
+		return fmt.Errorf("could not set normalize for subject %s: %w", subject, err)
+	}
+	return nil
+}
+
+// readNormalize refreshes normalize from Schema Registry. It only checks drift
+// when normalize is managed (non-null in state).
+func (r *schemaResource) readNormalize(ctx context.Context, subject string, current types.Bool) (types.Bool, error) {
+	if current.IsNull() {
+		return current, nil
+	}
+	n, err := r.configClient.GetNormalize(ctx, subject)
+	if err != nil {
+		return current, fmt.Errorf("could not get normalize for subject %s: %w", subject, err)
+	}
+	if n == nil {
+		return types.BoolNull(), nil
+	}
+	return types.BoolValue(*n), nil
 }
 
 func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
