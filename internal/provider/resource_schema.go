@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/cultureamp/terraform-provider-schemaregistry/internal/subjectconfig"
 	"github.com/cultureamp/terraform-provider-schemaregistry/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -35,7 +36,8 @@ func NewSchemaResource() resource.Resource {
 
 // schemaResource is the resource implementation.
 type schemaResource struct {
-	client *srclient.SchemaRegistryClient
+	client       *srclient.SchemaRegistryClient
+	configClient *subjectconfig.Client
 }
 
 // schemaResourceModel describes the resource data model.
@@ -48,6 +50,7 @@ type schemaResourceModel struct {
 	Version            types.Int64          `tfsdk:"version"`
 	Reference          types.List           `tfsdk:"references"`
 	CompatibilityLevel types.String         `tfsdk:"compatibility_level"`
+	Normalize          types.Bool           `tfsdk:"normalize"`
 	HardDelete         types.Bool           `tfsdk:"hard_delete"`
 }
 
@@ -162,6 +165,10 @@ func (r *schemaResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					),
 				},
 			},
+			"normalize": schema.BoolAttribute{
+				Description: "Sets the subject-level normalize config. When false, Schema Registry does not normalize schemas for this subject, even if the global config enables it. Leave unset to not manage it. Removing it does not change the value in Schema Registry.",
+				Optional:    true,
+			},
 			"hard_delete": schema.BoolAttribute{
 				Description: "Controls whether a schema should be soft or hard deleted.",
 				Optional:    true,
@@ -178,16 +185,17 @@ func (r *schemaResource) Configure(_ context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*srclient.SchemaRegistryClient)
+	data, ok := req.ProviderData.(*providerData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *srclient.SchemaRegistryClient, got: %T.", req.ProviderData),
+			fmt.Sprintf("Expected *providerData, got: %T.", req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.client = data.client
+	r.configClient = data.configClient
 }
 
 func (r *schemaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -282,6 +290,12 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	// Set normalize before registering, so the registration follows it.
+	if err := r.setNormalize(ctx, subject, plan.Normalize); err != nil {
+		resp.Diagnostics.AddError("Error setting normalize", err.Error())
+		return
+	}
+
 	// Create new schema resource
 	schema, err := r.client.CreateSchema(subject, schemaString, schemaType, references...)
 	if err != nil {
@@ -292,29 +306,13 @@ func (r *schemaResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Set compatibility level if specified
-	if !plan.CompatibilityLevel.IsNull() && !plan.CompatibilityLevel.IsUnknown() {
-		compatibilityLevel := utils.ToCompatibilityLevelType(plan.CompatibilityLevel.ValueString())
-		_, err = r.client.ChangeSubjectCompatibilityLevel(subject, compatibilityLevel)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error setting compatibility level",
-				"Could not set compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		// Fetch the current compatibility level from the server
-		compatibilityLevel, err := r.client.GetCompatibilityLevel(subject, true)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error getting compatibility level",
-				"Could not get compatibility level, unexpected error: "+err.Error(),
-			)
-			return
-		}
-		plan.CompatibilityLevel = types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel))
+	// Set compatibility level if specified, otherwise fetch it from the server
+	compatibilityLevel, err := r.updateCompatibilityLevel(subject, plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error setting compatibility level", err.Error())
+		return
 	}
+	plan.CompatibilityLevel = types.StringValue(compatibilityLevel)
 
 	// Convert *srclient.SchemaType to string
 	schemaTypeStr := utils.FromSchemaType(schema.SchemaType())
@@ -390,6 +388,13 @@ func (r *schemaResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Reference = references
 	state.CompatibilityLevel = types.StringValue(compatString)
 
+	normalize, err := r.readNormalize(ctx, subject, state.Normalize)
+	if err != nil {
+		resp.Diagnostics.AddError("Error getting normalize", err.Error())
+		return
+	}
+	state.Normalize = normalize
+
 	// Ensure hard delete is set to false if not specified
 	if state.HardDelete.IsNull() || state.HardDelete.IsUnknown() {
 		state.HardDelete = types.BoolValue(false)
@@ -423,6 +428,13 @@ func (r *schemaResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	// Generate API request body from plan
 	subject := plan.Subject.ValueString()
+
+	// Set normalize before registering, so the registration follows it.
+	if err := r.setNormalize(ctx, subject, plan.Normalize); err != nil {
+		resp.Diagnostics.AddError("Error updating normalize", err.Error())
+		return
+	}
+
 	references, diags := utils.ToRegistryReferences(ctx, plan.Reference)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -530,6 +542,33 @@ func (r *schemaResource) updateCompatibilityLevel(subject string, plan schemaRes
 	return utils.FromCompatibilityLevelType(*cl), nil
 }
 
+// setNormalize sets the subject-level normalize config. It does nothing when normalize is unset.
+func (r *schemaResource) setNormalize(ctx context.Context, subject string, normalize types.Bool) error {
+	if normalize.IsNull() || normalize.IsUnknown() {
+		return nil
+	}
+	if err := r.configClient.SetNormalize(ctx, subject, normalize.ValueBool()); err != nil {
+		return fmt.Errorf("could not set normalize for subject %s: %w", subject, err)
+	}
+	return nil
+}
+
+// readNormalize refreshes normalize from Schema Registry. It only checks drift
+// when normalize is managed (non-null in state).
+func (r *schemaResource) readNormalize(ctx context.Context, subject string, current types.Bool) (types.Bool, error) {
+	if current.IsNull() {
+		return current, nil
+	}
+	n, err := r.configClient.GetNormalize(ctx, subject)
+	if err != nil {
+		return current, fmt.Errorf("could not get normalize for subject %s: %w", subject, err)
+	}
+	if n == nil {
+		return types.BoolNull(), nil
+	}
+	return types.BoolValue(*n), nil
+}
+
 func (r *schemaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state schemaResourceModel
 
@@ -598,6 +637,22 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		return
 	}
 
+	// Retrieve the subject-level normalize config.
+	normalizeValue := types.BoolNull()
+	n, err := r.configClient.GetNormalize(ctx, subject)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Schema",
+			fmt.Sprintf("Could not retrieve normalize for subject %s: %s", subject,
+				err.Error(),
+			),
+		)
+		return
+	}
+	if n != nil {
+		normalizeValue = types.BoolValue(*n)
+	}
+
 	schemaType := utils.FromSchemaType(schema.SchemaType())
 
 	// Create state from retrieved schema
@@ -610,6 +665,7 @@ func (r *schemaResource) ImportState(ctx context.Context, req resource.ImportSta
 		Version:            types.Int64Value(int64(schema.Version())),
 		Reference:          utils.FromRegistryReferences(schema.References()),
 		CompatibilityLevel: types.StringValue(utils.FromCompatibilityLevelType(*compatibilityLevel)),
+		Normalize:          normalizeValue,
 		HardDelete:         types.BoolValue(false), // Default to false for imported resources
 	}
 
