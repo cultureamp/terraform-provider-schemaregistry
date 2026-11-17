@@ -8,8 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore: retag Backstage catalog entities to camp-foundations by @lsimoneau in [#236](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/236)
+
+## New Contributors
+- @lsimoneau made their first contribution in [#236](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/236)
+
+## [1.7.0] - 2026-11-13
+
+
+### <!-- 0 -->🚀 Features
+- Feat: add normalize to schemaregistry_schema by @m-dwyer in [#235](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/235)
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+- Chore: add catalog info for schema registry provider by @m-dwyer in [#232](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/232)
+- Chore: Update team ownership to data-products by @m-dwyer in [#231](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/231)
+- Ci: allow re-releasing prior tags to fix assets by @dstrates in [#224](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/224)
+- Chore(release): update changelog by @github-actions[bot] in [#186](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/186)
 - Ci: run goreleaser directly instead of via go-semantic-release hook by @dstrates in [#222](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/222)
 
+## New Contributors
+- @m-dwyer made their first contribution in [#235](https://github.com/cultureamp/terraform-provider-schemaregistry/pull/235)
 
 ## [1.6.0] - 2026-05-05
 
